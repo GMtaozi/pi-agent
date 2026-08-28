@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist-tmp",
+    "paths": {
+      "@earendil-works/pi-telemetry": [
+        "../telemetry/src/index.ts"
+      ],
+      "@earendil-works/pi-ai": [
+        "../ai/src/index.ts"
+      ],
+      "@earendil-works/pi-ai/*": [
+        "../ai/src/*.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-tmp",
+    "**/*.d.ts",
+    "src/**/*.d.ts"
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "useDefineForClassFields": false,
+    "baseUrl": ".",
+    "paths": {
+      "@workforge/agent-engine": [
+        "./packages/agent-engine/src/index.ts"
+      ],
+      "@workforge/workspace": [
+        "./packages/workspace/src/index.ts"
+      ],
+      "@workforge/memory": [
+        "./packages/memory/src/index.ts"
+      ],
+      "@workforge/schedule": [
+        "./packages/schedule/src/index.ts"
+      ],
+      "@workforge/governance": [
+        "./packages/governance/src/index.ts"
+      ],
+      "@workforge/settings": [
+        "./packages/settings/src/index.ts"
+      ],
+      "@earendil-works/pi-agent-core": [
+        "./vendor/pi/packages/agent/src/index.ts"
+      ],
+      "@earendil-works/pi-ai": [
+        "./vendor/pi/packages/ai/src/index.ts"
+      ],
+      "@earendil-works/pi-ai/*": [
+        "./vendor/pi/packages/ai/*"
+      ],
+      "@earendil-works/pi-telemetry": [
+        "./vendor/pi/packages/telemetry/src/index.ts"
+      ],
+      "@earendil-works/pi-protocol": [
+        "./vendor/pi/packages/protocol/src/index.ts"
+      ],
+      "@earendil-works/pi-agent-core/*": [
+        "./vendor/pi/packages/agent/*"
+      ],
+      "@workforge/provider-runtime/*": [
+        "./packages/provider-runtime/*"
+      ],
+      "@workforge/provider-runtime": [
+        "./packages/provider-runtime/src/index.ts"
+      ],
+      "@workforge/tools/*": [
+        "./packages/tools/*"
+      ],
+      "@workforge/tools": [
+        "./packages/tools/src/index.ts"
+      ],
+      "@workforge/logging": [
+        "./packages/logging/src/index.ts"
+      ],
+      "@workforge/logging/*": [
+        "./packages/logging/*"
+      ],
+      "@workforge/monitoring": [
+        "./packages/monitoring/src/index.ts"
+      ],
+      "@workforge/monitoring/*": [
+        "./packages/monitoring/*"
+      ],
+      "@workforge/skills": [
+        "./packages/skills/src/index.ts"
+      ],
+      "@workforge/skills/*": [
+        "./packages/skills/*"
+      ],
+      "@workforge/agent-orchestrator": [
+        "./packages/agent-orchestrator/src/index.ts"
+      ],
+      "@workforge/agent-orchestrator/*": [
+        "./packages/agent-orchestrator/*"
+      ],
+      "@workforge/workflow": [
+        "./packages/workflow/src/index.ts"
+      ],
+      "@workforge/sandbox": [
+        "./packages/sandbox/src/index.ts"
+      ],
+      "@workforge/workflow/*": [
+        "./packages/workflow/*"
+      ],
+      "@workforge/persistence": [
+        "./packages/persistence/src/index.ts"
+      ],
+      "@workforge/persistence/*": [
+        "./packages/persistence/*"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.d.ts",
+    "**/*.spec.ts"
+  ]
+}

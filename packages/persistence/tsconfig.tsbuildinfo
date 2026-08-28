@@ -1,0 +1,1 @@
+{"root":["./src/database.ts","./src/index.ts","./src/logger.ts","./src/migrations/index.ts","./src/repositories/approval.repository.ts","./src/repositories/audit-log.repository.ts","./src/repositories/base.repository.ts","./src/repositories/message.repository.ts","./src/repositories/session.repository.ts","./src/repositories/task.repository.ts"],"version":"6.0.3"}

@@ -1,0 +1,15 @@
+export { Database, Transaction } from './database.js';
+export type { DatabaseConfig, QueryResult, Migration } from './database.js';
+export { BaseRepository } from './repositories/base.repository.js';
+export type { Repository } from './repositories/base.repository.js';
+export { SessionRepository } from './repositories/session.repository.js';
+export type { Session } from './repositories/session.repository.js';
+export { MessageRepository } from './repositories/message.repository.js';
+export type { Message } from './repositories/message.repository.js';
+export { TaskRepository } from './repositories/task.repository.js';
+export type { TaskRecord } from './repositories/task.repository.js';
+export { ApprovalRepository } from './repositories/approval.repository.js';
+export type { ApprovalRecord } from './repositories/approval.repository.js';
+export { AuditLogRepository } from './repositories/audit-log.repository.js';
+export type { AuditLogRecord } from './repositories/audit-log.repository.js';
+export { migrations } from './migrations/index.js';

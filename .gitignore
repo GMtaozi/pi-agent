@@ -1,0 +1,71 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.next
+out
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test
+coverage
+
+# Misc
+tmp
+temp
+
+# --- P3#5: build/cache artifacts ---
+dist/
+lib/
+.cache/
+data/
+*.tgz
+*.log
+node_cache/
+npm-cache/
+pnpm-test/
+pnpm-tmp/
+.pnpm-store/
+scripts/archive/
+
+# Database files (sensitive user data)
+*.db
+*.sqlite
+*.sqlite3
+apps/server/data/
+data/
+
+# SSL certificates
+ssl/
+*.pem
+*.key
+*.cert
+*.crt
+
+# Sensitive config
+*.secret
+*.local
+
+# Crash logs
+crash.log

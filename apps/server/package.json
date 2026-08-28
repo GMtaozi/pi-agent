@@ -1,0 +1,49 @@
+{
+  "name": "@workforge/server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "set NODE_OPTIONS=--no-warnings && tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "set NODE_OPTIONS=--no-warnings && tsx src/index.ts",
+    "check": "tsc -p tsconfig.build.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "workspace:^",
+    "@fastify/cors": "^10.0.0",
+    "@fastify/helmet": "^13.1.1",
+    "@fastify/rate-limit": "^11.2.0",
+    "@fastify/static": "^8.0.0",
+    "@fastify/websocket": "^11.0.0",
+    "@workforge/agent-engine": "workspace:*",
+    "@workforge/agent-orchestrator": "workspace:*",
+    "@workforge/governance": "workspace:*",
+    "@workforge/logging": "workspace:*",
+    "@workforge/memory": "workspace:*",
+    "@workforge/monitoring": "workspace:*",
+    "@workforge/persistence": "workspace:*",
+    "@workforge/provider-runtime": "workspace:*",
+    "@workforge/sandbox": "workspace:*",
+    "@workforge/schedule": "workspace:*",
+    "@workforge/settings": "workspace:*",
+    "@workforge/skills": "workspace:*",
+    "@workforge/tools": "workspace:*",
+    "@workforge/workflow": "workspace:*",
+    "@workforge/workspace": "workspace:*",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.1.0",
+    "fastify-sse-v2": "^3.0.0",
+    "marked": "^18.0.10",
+    "pino": "^10.3.1",
+    "sanitize-html": "^2.17.7",
+    "tsx": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.2",
+    "vitest": "^4.1.9"
+  },
+  "type": "module"
+}
