@@ -23,6 +23,7 @@ import { registerWorkspacesRoutes } from './routes/workspaces.js';
 import { registerSkillsRoutes } from './routes/skills.js';
 import { registerScheduleRoutes } from './routes/schedule.js';
 import { registerGovernanceRoutes } from './routes/governance.js';
+import { registerWorkflowRoutes } from './routes/workflow.js';
 import { registerOrchestratorRoutes } from './routes/orchestrator.js';
 import { registerMonitoringRoutes } from './routes/monitoring.js';
 import { registerExecutionRoutes } from './routes/executions.js';
@@ -476,6 +477,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   registerScheduleRoutes(server, deps);
   registerGovernanceRoutes(server, deps);
   registerOrchestratorRoutes(server, deps);
+  registerWorkflowRoutes(server, deps);
   registerMonitoringRoutes(server, deps);
   registerExecutionRoutes(server, deps);
   registerAgentRoutes(server, deps);

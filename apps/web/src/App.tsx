@@ -13,6 +13,7 @@ import SchedulePage from './pages/SchedulePage';
 import GovernancePage from './pages/GovernancePage';
 import AuditLogPage from './pages/AuditLogPage';
 import OrchestratorPage from './pages/OrchestratorPage';
+import WorkflowEditorPage from './pages/WorkflowEditorPage';
 import WorkflowPage from './pages/WorkflowPage';
 import MonitoringPage from './pages/MonitoringPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -42,6 +43,7 @@ export type Page = 'chat'
   | 'audit-log'
   | 'orchestrator'
   | 'workflow'
+  | 'workflow-editor'
   | 'monitoring'
   | 'execution-monitoring'
   | 'knowledge-base'
@@ -174,6 +176,7 @@ function AppContent() {
             <Route path="/audit-log" element={<AuditLogPage />} />
             <Route path="/orchestrator" element={<OrchestratorPage />} />
             <Route path="/workflow" element={<WorkflowPage />} />
+            <Route path="/workflow-editor" element={<WorkflowEditorPage />} />
             <Route path="/monitoring" element={<MonitoringPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/execution-monitoring" element={<ExecutionMonitoringPage />} />
