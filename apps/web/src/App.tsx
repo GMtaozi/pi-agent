@@ -16,6 +16,8 @@ import OrchestratorPage from './pages/OrchestratorPage';
 import WorkflowPage from './pages/WorkflowPage';
 import MonitoringPage from './pages/MonitoringPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import ExecutionMonitoringPage from './pages/ExecutionMonitoringPage';
+import KnowledgeBasePage from './pages/KnowledgeBasePage';
 import TrajectoryPage from './pages/TrajectoryPage';
 import AgentEvolutionPage from './pages/AgentEvolutionPage';
 import MultiAgentPage from './pages/MultiAgentPage';
@@ -39,7 +41,9 @@ export type Page = 'chat'
   | 'audit-log'
   | 'orchestrator'
   | 'workflow'
-  | 'monitoring';
+  | 'monitoring'
+  | 'execution-monitoring'
+  | 'knowledge-base';
 
 function AppContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -170,6 +174,8 @@ function AppContent() {
             <Route path="/workflow" element={<WorkflowPage />} />
             <Route path="/monitoring" element={<MonitoringPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/execution-monitoring" element={<ExecutionMonitoringPage />} />
+            <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="/trajectory" element={<TrajectoryPage />} />
             <Route path="/evolution" element={<AgentEvolutionPage />} />
             <Route path="/multi-agent" element={<MultiAgentPage />} />

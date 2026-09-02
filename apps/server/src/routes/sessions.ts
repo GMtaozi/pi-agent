@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import type { SessionRepository, MessageRepository, Database } from '@workforge/persistence';
+import type { SessionRepository, MessageRepository } from '@workforge/persistence';
 import type { AgentEngine } from '@workforge/agent-engine';
 import type { WorkspaceService, ContextBuilder } from '@workforge/workspace';
 import type { MonitoringService } from '@workforge/monitoring';
@@ -24,12 +24,13 @@ export interface SessionRouteDeps {
   readonly metrics: MetricsCollector;
   readonly logger: Logger;
   readonly skills: SkillsService;
-  readonly database?: Database;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any database backend (SQLite or Postgres)
+  readonly database?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly streamCallbacks: Map<string, any>;
   readonly sessionWorkspaces: Map<string, string>;
   readonly recordSkillUsage: (sessionId: string, durationMs: number, success: boolean) => Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly createWorkspaceToolsMock?: any;
 }
 

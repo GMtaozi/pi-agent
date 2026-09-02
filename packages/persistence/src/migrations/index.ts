@@ -1,5 +1,6 @@
-import { Migration } from '../database.js';
-import { Database } from '../database.js';
+import type { Migration } from '../database-types.js';
+import type { SqliteDatabase } from '../database.js';
+type Database = SqliteDatabase;
 
 export const migrations: Migration[] = [
   {
@@ -372,6 +373,67 @@ export const migrations: Migration[] = [
     },
     down: async (_db: Database) => {
       // SQLite 删除列需重建表，成本高且非必要；此处不处理。
+    }
+  },
+  {
+    version: 21,
+    name: 'add-execution-monitoring',
+    up: async (db: Database) => {
+      // Execution records: one row per agent run (session turn / orchestration run).
+      await db.query('execution_records', `
+        CREATE TABLE IF NOT EXISTS execution_records (
+          id TEXT PRIMARY KEY,
+          session_id TEXT,
+          agent_id TEXT,
+          user_id TEXT,
+          tenant_id TEXT,
+          model TEXT NOT NULL,
+          provider TEXT,
+          status TEXT NOT NULL DEFAULT 'running',
+          started_at TEXT NOT NULL,
+          completed_at TEXT,
+          duration_ms INTEGER DEFAULT 0,
+          prompt_tokens INTEGER DEFAULT 0,
+          completion_tokens INTEGER DEFAULT 0,
+          total_tokens INTEGER DEFAULT 0,
+          cost REAL DEFAULT 0,
+          error_message TEXT,
+          metadata TEXT,
+          created_at TEXT NOT NULL
+        )
+      `);
+      await db.query('execution_records', 'CREATE INDEX IF NOT EXISTS idx_exec_records_session ON execution_records(session_id)');
+      await db.query('execution_records', 'CREATE INDEX IF NOT EXISTS idx_exec_records_agent ON execution_records(agent_id)');
+      await db.query('execution_records', 'CREATE INDEX IF NOT EXISTS idx_exec_records_user ON execution_records(user_id)');
+      await db.query('execution_records', 'CREATE INDEX IF NOT EXISTS idx_exec_records_status ON execution_records(status)');
+      await db.query('execution_records', 'CREATE INDEX IF NOT EXISTS idx_exec_records_started ON execution_records(started_at DESC)');
+      await db.query('execution_records', 'CREATE INDEX IF NOT EXISTS idx_exec_records_model ON execution_records(model)');
+
+      // Token usage events: one row per LLM call inside an execution.
+      await db.query('token_usage_events', `
+        CREATE TABLE IF NOT EXISTS token_usage_events (
+          id TEXT PRIMARY KEY,
+          execution_id TEXT,
+          session_id TEXT,
+          model TEXT NOT NULL,
+          provider TEXT,
+          prompt_tokens INTEGER DEFAULT 0,
+          completion_tokens INTEGER DEFAULT 0,
+          total_tokens INTEGER DEFAULT 0,
+          cached_tokens INTEGER DEFAULT 0,
+          cost REAL DEFAULT 0,
+          latency_ms INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL
+        )
+      `);
+      await db.query('token_usage_events', 'CREATE INDEX IF NOT EXISTS idx_token_usage_exec ON token_usage_events(execution_id)');
+      await db.query('token_usage_events', 'CREATE INDEX IF NOT EXISTS idx_token_usage_session ON token_usage_events(session_id)');
+      await db.query('token_usage_events', 'CREATE INDEX IF NOT EXISTS idx_token_usage_model ON token_usage_events(model)');
+      await db.query('token_usage_events', 'CREATE INDEX IF NOT EXISTS idx_token_usage_created ON token_usage_events(created_at DESC)');
+    },
+    down: async (db: Database) => {
+      await db.query('token_usage_events', 'DROP TABLE IF EXISTS token_usage_events');
+      await db.query('execution_records', 'DROP TABLE IF EXISTS execution_records');
     }
   }
 ];

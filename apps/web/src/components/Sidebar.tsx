@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Folder, Settings, ChevronRight, MessageSquare, Activity, ArrowUp, Monitor, FileText } from 'lucide-react';
+import { Folder, Settings, ChevronRight, MessageSquare, Activity, ArrowUp, Monitor, FileText, Coins, Database } from 'lucide-react';
 import { apiFetch, createSession } from '../lib/api';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
@@ -446,6 +446,14 @@ export default function Sidebar({ collapsed, isOpen, onClose }: { collapsed?: bo
         <button className="settings-trigger" onClick={() => navigate('/monitoring')}>
           <Activity size={18} />
           {!collapsed && <span>监控</span>}
+        </button>
+        <button className="settings-trigger" onClick={() => navigate('/execution-monitoring')}>
+          <Coins size={18} />
+          {!collapsed && <span>执行追踪</span>}
+        </button>
+        <button className="settings-trigger" onClick={() => navigate('/knowledge-base')}>
+          <Database size={18} />
+          {!collapsed && <span>知识库</span>}
         </button>
       </div>
 

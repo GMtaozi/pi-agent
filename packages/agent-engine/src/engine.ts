@@ -87,6 +87,11 @@ export class AgentEngine {
   }
   private sessionWorkspaceIds = new Map<string, string>();
   private sessionRequestIds = new Map<string, string>();
+  /** Model/provider used by each session, so usage events can be attributed. */
+  private sessionModels = new Map<string, { model: string; provider: string }>();
+  /** Optional execution monitor; metering is skipped when absent. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+  private executionTracker: any;
   private logger: Logger;
   private retries: number;
   private timeout: number;
@@ -295,6 +300,7 @@ export class AgentEngine {
 
     this.sessions.set(id, agent);
     this.sessionWorkspaceIds.set(id, resolvedWorkspaceId);
+    this.sessionModels.set(id, { model: model || 'deepseek-chat', provider: resolvedProvider });
     return { id, model, mode };
   }
 
@@ -993,11 +999,31 @@ export class AgentEngine {
     let finalResponse = '';
     let output: any;
     
+    // Start metering this run before subscribing to events.
+    const sessionModel = this.sessionModels.get(sessionId);
+    let executionId: string | undefined;
+    if (this.executionTracker) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+        const record: any = await this.executionTracker.startExecution({
+          sessionId,
+          model: sessionModel?.model || 'unknown',
+          provider: sessionModel?.provider,
+          metadata: { requestId, inputLength: text.length },
+        });
+        executionId = record?.id;
+      } catch {
+        // Metering must never break an agent run.
+      }
+    }
+
     const unsubscribe = agent.subscribe((event: AgentEvent) => {
       this.logger.debug('Agent event', { sessionId, eventType: event.type });
       
       this.emitStream(sessionId, (cb) => cb.onEvent(event));
       
+      this.trackTokenUsage(sessionId, executionId, event);
+
       this.persistAgentEvent(sessionId, event).catch(() => {
         // persistence failures are non-fatal
       });
@@ -1076,6 +1102,7 @@ export class AgentEngine {
       }
       
       if (timedOut) {
+        await this.finishExecution(executionId, 'stopped', 'Agent prompt timed out');
         return finalResponse || 'Agent execution timed out.';
       }
       
@@ -1101,6 +1128,7 @@ export class AgentEngine {
         const errorMsg = (lastAssistantMsg as any)?.errorMessage || 'Agent returned empty response (possible model error)';
         this.emitStream(sessionId, (cb) => cb.onError(new Error(errorMsg)));
       }
+      await this.finishExecution(executionId, 'completed', null);
       return result;
     } catch (error) {
       if (output) {
@@ -1114,8 +1142,10 @@ export class AgentEngine {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('Agent prompt failed:', { sessionId, error: errorMessage, stack: error instanceof Error ? error.stack : '' });
       if (timedOut) {
+        await this.finishExecution(executionId, 'stopped', 'Agent prompt timed out');
         return finalResponse || 'Agent execution timed out.';
       }
+      await this.finishExecution(executionId, 'failed', errorMessage);
       this.emitStream(sessionId, (cb) => cb.onError(error instanceof Error ? error : new Error(errorMessage)));
       throw error;
     }
@@ -1257,6 +1287,68 @@ export class AgentEngine {
     this.sessionRepository = sessionRepository;
   }
 
+  /**
+   * Attach the execution monitor. Every LLM call made by this engine is then
+   * metered (tokens + cost) and attributed to a tracked execution.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+  setExecutionTracker(tracker: any): void {
+    this.executionTracker = tracker;
+  }
+
+  /**
+   * Best-effort: forward an assistant `message_end` usage payload to the
+   * execution tracker. Monitoring failures must never break an agent run.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+  private trackTokenUsage(
+    sessionId: string,
+    executionId: string | undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+    event: any
+  ): void {
+    if (!this.executionTracker || !executionId) return;
+    if (event?.type !== 'message_end') return;
+
+    const message = event.message;
+    if (!message || message.role !== 'assistant' || !message.usage) return;
+
+    const usage = message.usage;
+    this.executionTracker
+      .recordTokenUsage({
+        executionId,
+        sessionId,
+        model: message.model || this.sessionModels.get(sessionId)?.model,
+        provider: message.provider,
+        promptTokens: usage.input || 0,
+        completionTokens: usage.output || 0,
+        cachedTokens: usage.cacheRead || 0,
+      })
+      .catch(() => {
+        // non-fatal
+      });
+  }
+
+  /** Finalize the tracked execution; failures are logged and swallowed. */
+  private async finishExecution(
+    executionId: string | undefined,
+    status: 'completed' | 'failed' | 'stopped',
+    errorMessage: string | null
+  ): Promise<void> {
+    if (!this.executionTracker || !executionId) return;
+    try {
+      if (status === 'completed') {
+        await this.executionTracker.completeExecution(executionId);
+      } else if (status === 'stopped') {
+        await this.executionTracker.stopExecution(executionId);
+      } else {
+        await this.executionTracker.failExecution(executionId, errorMessage || 'Unknown error');
+      }
+    } catch {
+      // non-fatal
+    }
+  }
+
   async stopSession(sessionId: string): Promise<void> {
     const agent = this.sessions.get(sessionId);
     if (agent) {
@@ -1265,6 +1357,7 @@ export class AgentEngine {
       this.sessionWorkspaceIds.delete(sessionId);
       this.sessionTurnCounts.delete(sessionId);
       this.sessionRunTurnCounts.delete(sessionId);
+      this.sessionModels.delete(sessionId);
       this.messagePersistenceStacks.delete(sessionId);
     }
   }

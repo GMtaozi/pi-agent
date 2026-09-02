@@ -105,6 +105,30 @@
       ],
       "@workforge/persistence/*": [
         "./packages/persistence/*"
+      ],
+      "@workforge/auth": [
+        "./packages/auth/src/index.ts"
+      ],
+      "@workforge/auth/*": [
+        "./packages/auth/*"
+      ],
+      "@workforge/knowledge": [
+        "./packages/knowledge/src/index.ts"
+      ],
+      "@workforge/knowledge/*": [
+        "./packages/knowledge/*"
+      ],
+      "@workforge/redis": [
+        "./packages/redis/src/index.ts"
+      ],
+      "@workforge/redis/*": [
+        "./packages/redis/*"
+      ],
+      "@workforge/storage": [
+        "./packages/storage/src/index.ts"
+      ],
+      "@workforge/storage/*": [
+        "./packages/storage/*"
       ]
     }
   },

@@ -13,7 +13,6 @@ export interface DatabaseConfig {
 }
 
 export interface QueryResult {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   rows: any[];
   rowsAffected: number;
   lastInsertRowId?: number;
@@ -22,8 +21,10 @@ export interface QueryResult {
 export interface Migration {
   version: number;
   name: string;
-  up: (db: Database) => Promise<void>;
-  down: (db: Database) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accepts any database backend
+  up: (db: any) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accepts any database backend
+  down: (db: any) => Promise<void>;
 }
 
 export interface CacheEntry<T> {
@@ -32,9 +33,8 @@ export interface CacheEntry<T> {
   hits: number;
 }
 
-export class Database {
+export class SqliteDatabase {
   private sqlite: SQLite;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   private logger: any;
   private config: DatabaseConfig;
   private initialized = false;
@@ -47,15 +47,10 @@ export class Database {
     this.sqlite.pragma('journal_mode = WAL');
     this.sqlite.pragma('foreign_keys = ON');
     
-    // Simple inline logger
     this.logger = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
       info: (msg: string, data?: any) => console.log('[DB]', msg, data || ''),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
       warn: (msg: string, data?: any) => console.warn('[DB]', msg, data || ''),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
       error: (msg: string, data?: any) => console.error('[DB]', msg, data || ''),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
       debug: (msg: string, data?: any) => console.debug('[DB]', msg, data || '')
     };
   }
@@ -63,7 +58,6 @@ export class Database {
   async initialize(): Promise<void> {
     if (this.initialized) return;
     
-    // Ensure parent directory exists for file-based DB
     if (!this.config.inMemory && this.config.path) {
       const fs = await import('fs');
       const dir = dirname(this.config.path);
@@ -79,7 +73,6 @@ export class Database {
   async runMigrations(migrations: Migration[]): Promise<void> {
     this.ensureInitialized();
     
-    // Create migrations table if not exists
     this.sqlite.exec(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         version INTEGER PRIMARY KEY,
@@ -89,67 +82,32 @@ export class Database {
     `);
     
     const applied = new Set(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
       this.sqlite.prepare('SELECT version FROM schema_migrations').all().map((r: any) => r.version)
     );
     
     for (const migration of migrations) {
-      if (applied.has(migration.version)) {
-        this.logger.info('Migration already applied', { version: migration.version, name: migration.name });
-        continue;
-      }
-      
+      if (applied.has(migration.version)) continue;
       this.logger.info('Running migration', { version: migration.version, name: migration.name });
       await migration.up(this);
-      
       this.sqlite.prepare('INSERT INTO schema_migrations (version, name) VALUES (?, ?)').run(migration.version, migration.name);
-      this.logger.info('Migration completed', { version: migration.version });
     }
-    
-    this.logger.info('All migrations completed');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   async query(table: string, sql: string, params: any[] = []): Promise<QueryResult> {
     this.ensureInitialized();
-    const startTime = Date.now();
-    
+    const lowerSql = sql.toLowerCase().trim();
     try {
-      const lowerSql = sql.toLowerCase().trim();
-      
       if (lowerSql.startsWith('select')) {
-        const stmt = this.sqlite.prepare(sql);
-        const rows = stmt.all(...params);
-        const duration = Date.now() - startTime;
-        this.logger.debug('Query executed', { table, sql, rows: rows.length, duration });
-        return { rows, rowsAffected: 0 };
+        return { rows: this.sqlite.prepare(sql).all(...params), rowsAffected: 0 };
       }
-      
       if (lowerSql.startsWith('insert')) {
-        const stmt = this.sqlite.prepare(sql);
-        const result = stmt.run(...params);
-        const duration = Date.now() - startTime;
-        this.logger.debug('Insert executed', { table, rowsAffected: result.changes, duration });
+        const result = this.sqlite.prepare(sql).run(...params);
         return { rows: [], rowsAffected: result.changes, lastInsertRowId: result.lastInsertRowid };
       }
-      
-      if (lowerSql.startsWith('update')) {
-        const stmt = this.sqlite.prepare(sql);
-        const result = stmt.run(...params);
-        const duration = Date.now() - startTime;
-        this.logger.debug('Update executed', { table, rowsAffected: result.changes, duration });
+      if (lowerSql.startsWith('update') || lowerSql.startsWith('delete')) {
+        const result = this.sqlite.prepare(sql).run(...params);
         return { rows: [], rowsAffected: result.changes };
       }
-      
-      if (lowerSql.startsWith('delete')) {
-        const stmt = this.sqlite.prepare(sql);
-        const result = stmt.run(...params);
-        const duration = Date.now() - startTime;
-        this.logger.debug('Delete executed', { table, rowsAffected: result.changes, duration });
-        return { rows: [], rowsAffected: result.changes };
-      }
-      
-      // For other SQL (CREATE, ALTER, etc.)
       this.sqlite.exec(sql);
       return { rows: [], rowsAffected: 0 };
     } catch (error) {
@@ -158,56 +116,39 @@ export class Database {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   async execute(sql: string, params: any[] = []): Promise<QueryResult> {
     return this.query('', sql, params);
   }
 
-  async transaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
+  async transaction<T>(callback: (tx: SqliteTransaction) => Promise<T>): Promise<T> {
     this.ensureInitialized();
-    const tx = new Transaction(this);
-    // Real transaction: all statements issued through this connection between
-    // BEGIN and COMMIT are atomic; any error rolls everything back.
+    const tx = new SqliteTransaction(this);
     this.sqlite.exec('BEGIN IMMEDIATE');
     try {
       const result = await callback(tx);
       this.sqlite.exec('COMMIT');
       return result;
     } catch (error) {
-      try {
-        this.sqlite.exec('ROLLBACK');
-      } catch {
-        // Transaction was already rolled back (e.g. by an abort) — ignore.
-      }
+      try { this.sqlite.exec('ROLLBACK'); } catch {}
       throw error;
     }
   }
 
   async save(): Promise<void> {
-    // SQLite auto-saves, but we can force a checkpoint
-    if (!this.config.inMemory) {
-      this.sqlite.pragma('wal_checkpoint(TRUNCATE)');
-    }
+    if (!this.config.inMemory) this.sqlite.pragma('wal_checkpoint(TRUNCATE)');
   }
 
   async close(): Promise<void> {
-    if (!this.config.inMemory) {
-      await this.save();
-    }
+    if (!this.config.inMemory) await this.save();
     this.sqlite.close();
     this.initialized = false;
   }
 
   private ensureInitialized() {
-    if (!this.initialized) {
-      throw new Error('Database not initialized. Call initialize() first.');
-    }
+    if (!this.initialized) throw new Error('Database not initialized');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   getData(): Record<string, any[]> {
-    // Return all tables data for backward compatibility
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
     const data: Record<string, any[]> = {};
     const tables = this.sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name != 'schema_migrations'").all();
     for (const table of tables) {
@@ -216,34 +157,21 @@ export class Database {
     return data;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   setData(table: string, rows: any[]): void {
-    // Clear and replace data for backward compatibility
     this.sqlite.prepare(`DELETE FROM ${table}`).run();
     const stmt = this.sqlite.prepare(`INSERT INTO ${table} VALUES (${rows.map(() => '?').join(',')})`);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
     const insertMany = this.sqlite.transaction((rows: any[]) => {
-      for (const row of rows) {
-        stmt.run(...Object.values(row));
-      }
+      for (const row of rows) stmt.run(...Object.values(row));
     });
     insertMany(rows);
   }
 }
 
-export class Transaction {
-  private db: Database;
-  
-  constructor(db: Database) {
-    this.db = db;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+export class SqliteTransaction {
+  constructor(private db: SqliteDatabase) {}
   async query(table: string, sql: string, params: any[] = []): Promise<QueryResult> {
     return this.db.query(table, sql, params);
   }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   async execute(sql: string, params: any[] = []): Promise<QueryResult> {
     return this.db.execute(sql, params);
   }

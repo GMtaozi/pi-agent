@@ -1,0 +1,91 @@
+export interface EmbeddingConfig {
+  model?: string;
+  apiKey?: string;
+  baseUrl?: string;
+  dimensions?: number;
+}
+
+export class EmbeddingClient {
+  private config: EmbeddingConfig;
+  private cache: Map<string, number[]> = new Map();
+  private logger: any;
+
+  constructor(config: EmbeddingConfig = {}) {
+    this.config = {
+      model: config.model || 'text-embedding-3-small',
+      dimensions: config.dimensions || 1536,
+      apiKey: config.apiKey || process.env.OPENAI_API_KEY,
+      baseUrl: config.baseUrl || process.env.EMBEDDING_BASE_URL || 'https://api.openai.com/v1',
+      ...config,
+    };
+    this.logger = {
+      info: (msg: string, data?: any) => console.log('[Embedding]', msg, data || ''),
+      error: (msg: string, data?: any) => console.error('[Embedding]', msg, data || ''),
+    };
+  }
+
+  async embed(text: string): Promise<number[]> {
+    const cached = this.cache.get(text);
+    if (cached) return cached;
+
+    try {
+      const response = await fetch(`${this.config.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          input: text,
+          dimensions: this.config.dimensions,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Embedding API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const embedding = data.data[0].embedding;
+
+      // Cache the result
+      this.cache.set(text, embedding);
+
+      return embedding;
+    } catch (error) {
+      this.logger.error('Embedding failed', { error });
+      // Return zero vector as fallback
+      return new Array(this.config.dimensions || 1536).fill(0);
+    }
+  }
+
+  async embedBatch(texts: string[]): Promise<number[][]> {
+    try {
+      const response = await fetch(`${this.config.baseUrl}/embeddings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          input: texts,
+          dimensions: this.config.dimensions,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Embedding API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.data.map((d: any) => d.embedding);
+    } catch (error) {
+      this.logger.error('Batch embedding failed', { error });
+      // Return zero vectors as fallback
+      const dim = this.config.dimensions || 1536;
+      return texts.map(() => new Array(dim).fill(0));
+    }
+  }
+}

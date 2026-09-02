@@ -13,6 +13,8 @@ import http from 'http';
 import { createHmac, timingSafeEqual } from 'crypto';
 import helmet from '@fastify/helmet';
 import { WorkspaceService } from '@workforge/workspace';
+import { registerAuthRoutes } from './routes/auth.js';
+import { registerKnowledgeRoutes } from './routes/knowledge.js';
 import { registerSessionRoutes } from './routes/sessions.js';
 import { registerPlatformRoutes } from './routes/platform.js';
 import { registerModelsRoutes } from './routes/models.js';
@@ -23,6 +25,8 @@ import { registerScheduleRoutes } from './routes/schedule.js';
 import { registerGovernanceRoutes } from './routes/governance.js';
 import { registerOrchestratorRoutes } from './routes/orchestrator.js';
 import { registerMonitoringRoutes } from './routes/monitoring.js';
+import { registerExecutionRoutes } from './routes/executions.js';
+import { ExecutionTracker, CostAnalyzer, OptimizationEngine } from '@workforge/monitoring';
 import { registerMemoryRoutes } from './routes/memory.js';
 
 // Monkey-patch global fetch to disable HTTP keep-alive by default.
@@ -57,8 +61,9 @@ interface _ModelRoutingStrategy {
 import { GovernanceService } from '@workforge/governance';
 import { Orchestrator } from '@workforge/agent-orchestrator';
 import { WorkflowEngine } from '@workforge/workflow';
-import { Database, migrations } from '@workforge/persistence';
+import { SqliteDatabase, PostgresDatabase, migrations, postgresMigrations, createDatabase } from '@workforge/persistence';
 import { SessionRepository, MessageRepository } from '@workforge/persistence';
+type DatabaseType = SqliteDatabase | PostgresDatabase;
 import { SettingsService } from '@workforge/settings';
 import { AgentEngine } from '@workforge/agent-engine';
 import type { ProviderConfig } from '@workforge/provider-runtime';
@@ -151,7 +156,7 @@ export interface ServerOptions {
     skills?: SkillsService;
     agentEngine?: AgentEngine;
     monitoring?: MonitoringService;
-    database?: Database;
+    database?: DatabaseType;
     orchestrator?: Orchestrator;
     workflowEngine?: WorkflowEngine;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
@@ -161,7 +166,7 @@ export interface ServerOptions {
 
 export interface ServerResult {
   server: FastifyInstance;
-  database?: Database;
+  database?: DatabaseType;
   orchestrator?: Orchestrator;
   workflowEngine?: WorkflowEngine;
   schedule: ScheduleService;
@@ -215,8 +220,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
 
   // Session authentication. Bypassed in test mode so the automated test suite
   // stays green. In production/development runtime, every request (except
-  // public paths and auth endpoints) must carry a valid signed Bearer token;
-  // the tenant is derived from the token, never from a client-supplied header.
+  // public paths and auth endpoints) must carry a valid Bearer token (JWT or legacy).
   if (!options.testMode) {
     server.addHook('onRequest', async (request, reply) => {
       const url = (request.url || '').split('?')[0];
@@ -228,18 +232,40 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
       const headerToken = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
         ? authHeader.slice(7)
         : undefined;
-      // SSE/WebSocket cannot set Authorization headers, so also accept a token query param.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
       const queryToken = (request.query as any)?.token as string | undefined;
       const token = headerToken || queryToken;
-      const session = verifySessionToken(token);
-      if (!session) {
+
+      // Try JWT first (new auth)
+      let authenticated = false;
+      try {
+        const { verifyAccessToken } = await import('@workforge/auth');
+        if (token) {
+          const jwtPayload = verifyAccessToken(token);
+          if (jwtPayload) {
+            (request as any).tenantId = jwtPayload.tenantId;
+            (request as any).userId = jwtPayload.sub;
+            (request as any).userRole = jwtPayload.role;
+            authenticated = true;
+          }
+        }
+      } catch {}
+
+      // Fall back to legacy session token
+      if (!authenticated) {
+        const session = verifySessionToken(token);
+        if (session) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+          (request as any).tenantId = session.tenantId;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+          (request as any).userId = session.sub;
+          authenticated = true;
+        }
+      }
+
+      if (!authenticated) {
         return reply.code(401).send({ error: 'Unauthorized' });
       }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-      (request as any).tenantId = session.tenantId;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-      (request as any).userId = session.sub;
     });
   }
 
@@ -255,11 +281,15 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   let monitoring: MonitoringService;
   let logger: Logger;
   let metrics: MetricsCollector;
-  let database: Database | undefined;
+  let database: DatabaseType | undefined;
   let sessionRepository: SessionRepository | undefined;
   let messageRepository: MessageRepository | undefined;
   let orchestrator: Orchestrator | undefined;
   let workflowEngine: WorkflowEngine | undefined;
+  let knowledgeService: any;
+  let executionTracker: ExecutionTracker | undefined;
+  let costAnalyzer: CostAnalyzer | undefined;
+  let optimizationEngine: OptimizationEngine | undefined;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   const wsClients = new Set<any>();
@@ -381,6 +411,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   };
 
   // Session routes extracted to ./routes/sessions.ts
+  registerAuthRoutes(server, { database });
   registerSessionRoutes(server, {
     get agentEngine() { return agentEngine!; },
     get sessionRepository() { return sessionRepository; },
@@ -392,6 +423,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     get metrics() { return metrics!; },
     get logger() { return logger!; },
     get skills() { return skills!; },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any database backend
     get database() { return database; },
     streamCallbacks,
     sessionWorkspaces,
@@ -413,11 +445,15 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     get monitoring() { return monitoring!; },
     get logger() { return logger!; },
     get metrics() { return metrics!; },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any database backend
     get database() { return database; },
     get sessionRepository() { return sessionRepository; },
     get messageRepository() { return messageRepository; },
     get orchestrator() { return orchestrator; },
     get workflowEngine() { return workflowEngine; },
+    get executionTracker() { return executionTracker; },
+    get costAnalyzer() { return costAnalyzer; },
+    get optimizationEngine() { return optimizationEngine; },
     wsClients,
     streamCallbacks,
     sessionWorkspaces,
@@ -426,6 +462,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   };
 
   // Domain routers (see ./routes/*).
+  registerKnowledgeRoutes(server, { knowledgeService });
   registerPlatformRoutes(server, deps);
   registerModelsRoutes(server, deps);
   registerSettingsRoutes(server, deps);
@@ -435,6 +472,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   registerGovernanceRoutes(server, deps);
   registerOrchestratorRoutes(server, deps);
   registerMonitoringRoutes(server, deps);
+  registerExecutionRoutes(server, deps);
   registerMemoryRoutes(server, deps);
 
 
@@ -444,7 +482,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
 
 
   // -------------------------------------------------------------------------
-  // Auth: issue and verify signed session tokens.
+  // Auth: backward-compatible login (legacy session token)
   // -------------------------------------------------------------------------
   server.post('/api/auth/login', async (req, res) => {
     const { password, tenantId } = (req.body || {}) as { password?: string; tenantId?: string };
@@ -465,6 +503,19 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     const token = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
       ? authHeader.slice(7)
       : undefined;
+
+    // Try JWT first (new auth)
+    try {
+      const { verifyAccessToken } = await import('@workforge/auth');
+      if (token) {
+        const jwtPayload = verifyAccessToken(token);
+        if (jwtPayload) {
+          return { authenticated: true, tenantId: jwtPayload.tenantId, sub: jwtPayload.sub, email: jwtPayload.email };
+        }
+      }
+    } catch {}
+
+    // Fall back to legacy session token
     const session = verifySessionToken(token);
     if (!session) return { authenticated: false };
     return { authenticated: true, tenantId: session.tenantId, sub: session.sub };
@@ -551,13 +602,26 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
 
 
   if (!options.testMode) {
-    const dbPath = process.env.DATABASE_PATH || join(__dirname, '..', 'data', 'workforge.db');
+    const dbDriver = (process.env.DB_DRIVER || 'sqlite').toLowerCase();
+    let dbPath = process.env.DATABASE_PATH;
+    if (!dbPath && dbDriver !== 'postgres') {
+      dbPath = join(__dirname, '..', 'data', 'workforge.db');
+    }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-    await (fs.promises as any).mkdir(dirname(dbPath), { recursive: true });
-    database = new Database({ path: dbPath });
+    if (dbPath) await (fs.promises as any).mkdir(dirname(dbPath), { recursive: true });
+
+    database = createDatabase({ path: dbPath });
     await database.initialize();
-    await database.runMigrations(migrations);
-    server.log.info('Database initialized');
+
+    // Use postgres-specific migrations when running PostgreSQL
+    if (dbDriver === 'postgres') {
+      await database.runMigrations(postgresMigrations);
+      server.log.info('Database initialized (PostgreSQL)');
+    } else {
+      await database.runMigrations(migrations);
+      server.log.info('Database initialized (SQLite)');
+    }
+
     sessionRepository = new SessionRepository(database);
     messageRepository = new MessageRepository(database);
     agentEngine!.setMessageRepository(messageRepository);
@@ -566,6 +630,52 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     server.log.info('Orchestrator initialized');
     workflowEngine = new WorkflowEngine();
     server.log.info('Workflow engine initialized');
+
+    // Initialize knowledge base service
+    try {
+      const { KnowledgeBaseService } = await import('@workforge/knowledge');
+      const { EmbeddingClient } = await import('@workforge/knowledge');
+      const { StorageService } = await import('@workforge/storage');
+
+      const storage = new StorageService({
+        endPoint: process.env.MINIO_ENDPOINT,
+        port: parseInt(process.env.MINIO_PORT || '9000'),
+        accessKey: process.env.MINIO_ACCESS_KEY,
+        secretKey: process.env.MINIO_SECRET_KEY,
+        bucket: process.env.MINIO_BUCKET,
+      });
+      await storage.initialize();
+
+      const embeddingClient = new EmbeddingClient({
+        model: process.env.EMBEDDING_MODEL,
+        apiKey: process.env.OPENAI_API_KEY,
+        baseUrl: process.env.EMBEDDING_BASE_URL,
+      });
+
+      knowledgeService = new KnowledgeBaseService(database, storage, embeddingClient);
+      server.log.info('Knowledge base service initialized');
+    } catch (error) {
+      server.log.warn({ error }, 'Knowledge base service initialization failed (non-critical)');
+    }
+
+    // Execution monitoring: tracker -> analyzer -> optimizer.
+    executionTracker = new ExecutionTracker(database, server.log);
+    costAnalyzer = new CostAnalyzer(database, server.log);
+    optimizationEngine = new OptimizationEngine(database, costAnalyzer, server.log);
+
+    // Surface the tracker to the agent engine so every LLM call is metered.
+    agentEngine!.setExecutionTracker(executionTracker);
+
+    // Clear executions left dangling by an unclean shutdown.
+    try {
+      const reconciled = await executionTracker.reconcileStaleExecutions();
+      if (reconciled > 0) {
+        server.log.info({ reconciled }, 'Reconciled stale executions');
+      }
+    } catch {
+      // Best-effort cleanup.
+    }
+    server.log.info('Execution monitoring initialized');
 
     // Re-register enabled market (DB) skills after restart so system-prompt
     // injection and sandbox tool registration survive server restarts.
