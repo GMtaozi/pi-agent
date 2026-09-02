@@ -29,6 +29,7 @@ import { registerMonitoringRoutes } from './routes/monitoring.js';
 import { registerExecutionRoutes } from './routes/executions.js';
 import { registerAgentRoutes } from './routes/agents.js';
 import { registerArtifactRoutes } from './routes/artifacts.js';
+import { registerDebugRoutes } from './routes/debug.js';
 import { ExecutionTracker, CostAnalyzer, OptimizationEngine } from '@workforge/monitoring';
 import { registerMemoryRoutes } from './routes/memory.js';
 
@@ -70,6 +71,7 @@ type DatabaseType = SqliteDatabase | PostgresDatabase;
 import { SettingsService } from '@workforge/settings';
 import { AgentEngine } from '@workforge/agent-engine';
 import { AgentService } from '@workforge/agents';
+import { DebugSessionManager } from '@workforge/debug';
 import type { ProviderConfig } from '@workforge/provider-runtime';
 import type { Model } from '@earendil-works/pi-ai';
 import { Logger, MetricsCollector } from '@workforge/logging';
@@ -295,6 +297,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   let costAnalyzer: CostAnalyzer | undefined;
   let optimizationEngine: OptimizationEngine | undefined;
   let agentService: AgentService | undefined;
+  let debugManager: DebugSessionManager | undefined;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   const wsClients = new Set<any>();
@@ -460,6 +463,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     get costAnalyzer() { return costAnalyzer; },
     get optimizationEngine() { return optimizationEngine; },
     get agentService() { return agentService; },
+    get debugManager() { return debugManager; },
     wsClients,
     streamCallbacks,
     sessionWorkspaces,
@@ -481,6 +485,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   registerMonitoringRoutes(server, deps);
   registerExecutionRoutes(server, deps);
   registerAgentRoutes(server, deps);
+  registerDebugRoutes(server, deps);
   registerArtifactRoutes(server, deps);
   registerMemoryRoutes(server, deps);
 
@@ -674,6 +679,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
 
     // Agent management service (CRUD + AI generation).
     agentService = new AgentService(database, server.log as any);
+    debugManager = new DebugSessionManager();
     server.log.info('Agent management service initialized');
 
     // Surface the tracker to the agent engine so every LLM call is metered.

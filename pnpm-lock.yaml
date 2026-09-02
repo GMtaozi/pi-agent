@@ -95,6 +95,9 @@ importers:
       '@workforge/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@workforge/debug':
+        specifier: workspace:*
+        version: link:../../packages/debug
       '@workforge/governance':
         specifier: workspace:*
         version: link:../../packages/governance
@@ -313,6 +316,16 @@ importers:
       '@types/bcryptjs':
         specifier: ^2.4.6
         version: 2.4.6
+
+  packages/debug:
+    dependencies:
+      '@workforge/logging':
+        specifier: workspace:*
+        version: link:../logging
+    devDependencies:
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
 
   packages/governance:
     devDependencies:

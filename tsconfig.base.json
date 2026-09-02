@@ -129,6 +129,18 @@
       ],
       "@workforge/storage/*": [
         "./packages/storage/*"
+      ],
+      "@workforge/agents": [
+        "./packages/agents/src/index.ts"
+      ],
+      "@workforge/agents/*": [
+        "./packages/agents/*"
+      ],
+      "@workforge/debug": [
+        "./packages/debug/src/index.ts"
+      ],
+      "@workforge/debug/*": [
+        "./packages/debug/*"
       ]
     }
   },

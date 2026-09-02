@@ -21,6 +21,7 @@
     "@workforge/agent-orchestrator": "workspace:*",
     "@workforge/agents": "workspace:*",
     "@workforge/auth": "workspace:*",
+    "@workforge/debug": "workspace:*",
     "@workforge/knowledge": "workspace:*",
     "@workforge/storage": "workspace:*",
     "@workforge/redis": "workspace:*",
