@@ -435,5 +435,56 @@ export const migrations: Migration[] = [
       await db.query('token_usage_events', 'DROP TABLE IF EXISTS token_usage_events');
       await db.query('execution_records', 'DROP TABLE IF EXISTS execution_records');
     }
+  },
+  {
+    version: 22,
+    name: 'add-agents-artifacts',
+    up: async (db: Database) => {
+      await db.query('agents', `
+        CREATE TABLE IF NOT EXISTS agents (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          systemPrompt TEXT NOT NULL,
+          model TEXT NOT NULL,
+          provider TEXT,
+          temperature REAL DEFAULT 0.7,
+          maxTokens INTEGER DEFAULT 2000,
+          tools TEXT,
+          knowledgeBaseIds TEXT,
+          icon TEXT,
+          status TEXT NOT NULL DEFAULT 'draft',
+          tenantId TEXT DEFAULT 'default',
+          createdBy TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL,
+          metadata TEXT
+        )
+      `);
+      await db.query('agents', 'CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status)');
+      await db.query('agents', 'CREATE INDEX IF NOT EXISTS idx_agents_tenant ON agents(tenantId)');
+
+      await db.query('artifacts', `
+        CREATE TABLE IF NOT EXISTS artifacts (
+          id TEXT PRIMARY KEY,
+          sessionId TEXT,
+          agentId TEXT,
+          type TEXT NOT NULL,
+          name TEXT NOT NULL,
+          path TEXT,
+          size INTEGER DEFAULT 0,
+          mimeType TEXT,
+          metadata TEXT,
+          createdAt TEXT NOT NULL
+        )
+      `);
+      await db.query('artifacts', 'CREATE INDEX IF NOT EXISTS idx_artifacts_session ON artifacts(sessionId)');
+      await db.query('artifacts', 'CREATE INDEX IF NOT EXISTS idx_artifacts_agent ON artifacts(agentId)');
+      await db.query('artifacts', 'CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(type)');
+    },
+    down: async (db: Database) => {
+      await db.query('agents', 'DROP TABLE IF EXISTS agents');
+      await db.query('artifacts', 'DROP TABLE IF EXISTS artifacts');
+    }
   }
 ];

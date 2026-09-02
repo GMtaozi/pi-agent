@@ -3,7 +3,7 @@ export { SqliteDatabase, SqliteTransaction } from './database.js';
 export { PostgresDatabase, createDatabase } from './postgres-database.js';
 
 // Type-only exports
-export type { DatabaseConfig, QueryResult, Migration, CacheEntry } from './database-types.js';
+export type { DatabaseConfig, QueryResult, Migration, CacheEntry, Agent } from './database-types.js';
 export type { PostgresDatabaseConfig } from './postgres-database.js';
 
 // Union type for consumers handling both backends

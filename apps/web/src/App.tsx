@@ -18,6 +18,7 @@ import MonitoringPage from './pages/MonitoringPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ExecutionMonitoringPage from './pages/ExecutionMonitoringPage';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
+import AgentCreatePage from './pages/AgentCreatePage';
 import TrajectoryPage from './pages/TrajectoryPage';
 import AgentEvolutionPage from './pages/AgentEvolutionPage';
 import MultiAgentPage from './pages/MultiAgentPage';
@@ -43,7 +44,8 @@ export type Page = 'chat'
   | 'workflow'
   | 'monitoring'
   | 'execution-monitoring'
-  | 'knowledge-base';
+  | 'knowledge-base'
+  | 'agent-create';
 
 function AppContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -176,6 +178,7 @@ function AppContent() {
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/execution-monitoring" element={<ExecutionMonitoringPage />} />
             <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+            <Route path="/agent-create" element={<AgentCreatePage />} />
             <Route path="/trajectory" element={<TrajectoryPage />} />
             <Route path="/evolution" element={<AgentEvolutionPage />} />
             <Route path="/multi-agent" element={<MultiAgentPage />} />

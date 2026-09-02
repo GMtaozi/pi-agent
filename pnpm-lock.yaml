@@ -89,6 +89,9 @@ importers:
       '@workforge/agent-orchestrator':
         specifier: workspace:*
         version: link:../../packages/agent-orchestrator
+      '@workforge/agents':
+        specifier: workspace:*
+        version: link:../../packages/agents
       '@workforge/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -284,6 +287,19 @@ importers:
       '@workforge/logging':
         specifier: workspace:*
         version: link:../logging
+
+  packages/agents:
+    dependencies:
+      '@workforge/logging':
+        specifier: workspace:*
+        version: link:../logging
+      '@workforge/persistence':
+        specifier: workspace:*
+        version: link:../persistence
+    devDependencies:
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
 
   packages/auth:
     dependencies:

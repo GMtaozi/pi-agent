@@ -19,6 +19,7 @@
     "@fastify/websocket": "^11.0.0",
     "@workforge/agent-engine": "workspace:*",
     "@workforge/agent-orchestrator": "workspace:*",
+    "@workforge/agents": "workspace:*",
     "@workforge/auth": "workspace:*",
     "@workforge/knowledge": "workspace:*",
     "@workforge/storage": "workspace:*",

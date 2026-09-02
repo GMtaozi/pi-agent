@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Folder, Settings, ChevronRight, MessageSquare, Activity, ArrowUp, Monitor, FileText, Coins, Database } from 'lucide-react';
+import { Folder, Settings, ChevronRight, MessageSquare, Activity, ArrowUp, Monitor, FileText, Coins, Database, Sparkles } from 'lucide-react';
 import { apiFetch, createSession } from '../lib/api';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 
@@ -454,6 +454,10 @@ export default function Sidebar({ collapsed, isOpen, onClose }: { collapsed?: bo
         <button className="settings-trigger" onClick={() => navigate('/knowledge-base')}>
           <Database size={18} />
           {!collapsed && <span>知识库</span>}
+        </button>
+        <button className="settings-trigger" onClick={() => navigate('/agent-create')}>
+          <Sparkles size={18} />
+          {!collapsed && <span>创建智能体</span>}
         </button>
       </div>
 

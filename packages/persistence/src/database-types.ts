@@ -21,3 +21,23 @@ export interface CacheEntry<T> {
   expiresAt: number;
   hits: number;
 }
+
+export interface Agent {
+  id: string;
+  name: string;
+  description?: string;
+  systemPrompt: string;
+  model: string;
+  provider?: string;
+  temperature?: number;
+  maxTokens?: number;
+  tools?: string;
+  knowledgeBaseIds?: string;
+  icon?: string;
+  status: 'draft' | 'active' | 'paused';
+  tenantId?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: string;
+}
