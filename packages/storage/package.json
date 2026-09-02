@@ -1,0 +1,14 @@
+{
+  "name": "@workforge/storage",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "minio": "^8.0.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "type": "module"
+}
