@@ -108,11 +108,12 @@ export class SettingsService {
   }
 
   removeApiKey(provider: string): boolean {
-    const deleted = delete this.settings.apiKeys[provider];
-    if (deleted) {
-      this.save();
+    if (!(provider in this.settings.apiKeys)) {
+      return false;
     }
-    return deleted;
+    delete this.settings.apiKeys[provider];
+    this.save();
+    return true;
   }
 
   removeCustomProvider(providerId: string): boolean {

@@ -1,6 +1,5 @@
 import type { FastifyInstance } from 'fastify';
 import type { ServerDeps } from './deps.js';
-import 'path';
 
 export function registerOrchestratorRoutes(server: FastifyInstance, deps: ServerDeps): void {
   server.get('/api/orchestrator/tasks', async (_req, _res) => {
@@ -56,60 +55,6 @@ export function registerOrchestratorRoutes(server: FastifyInstance, deps: Server
 
   server.get('/api/orchestrator/workers', async () => {
     return deps.orchestrator?.getWorkerStats() || [];
-  });
-
-  server.get('/api/workflows', async () => {
-    return deps.workflowEngine?.listWorkflows() || [];
-  });
-
-  server.post('/api/workflows', async (req, res) => {
-    const { id, name, description, steps, triggers } = req.body as {
-   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-      id?: string; name?: string; description?: string; steps?: any[]; triggers?: any[]
-    };
-    if (!id || !name || !steps || !Array.isArray(steps)) {
-      return res.status(400).send({ error: 'id, name, and steps array are required' });
-    }
-    const workflow = {
-      id,
-      name,
-      description,
-      steps,
-      triggers: triggers || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    deps.workflowEngine!.registerWorkflow(workflow);
-    return { workflow };
-  });
-
-  server.get('/api/workflows/:id', async (req, res) => {
-    const { id } = req.params as { id: string };
-    const workflow = deps.workflowEngine?.getWorkflow(id);
-    if (!workflow) {
-      return res.status(404).send({ error: 'Workflow not found' });
-    }
-    return { workflow };
-  });
-
-  server.post('/api/workflows/:id/run', async (req, res) => {
-    const { id } = req.params as { id: string };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-    const input = (req.body as any)?.input || {};
-    try {
-      const execution = await deps.workflowEngine!.executeWorkflow(id, input);
-      return { execution };
-    } catch (err) {
-      server.log.error(err);
-      res.status(500).send({ error: 'Failed to run workflow' });
-    }
-  });
-
-  server.get('/api/workflows/:id/executions', async (req, _res) => {
-    const { id } = req.params as { id: string };
-    const executions = deps.workflowEngine?.listExecutions(id) || [];
-    return { executions };
   });
 
   server.get('/api/workflow/executions/:id', async (req, res) => {
