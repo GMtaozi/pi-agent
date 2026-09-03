@@ -10,6 +10,9 @@ export function registerKnowledgeRoutes(server: FastifyInstance, deps: Knowledge
 
   // POST /api/v1/knowledge-bases - Create knowledge base
   server.post('/api/v1/knowledge-bases', async (req, res) => {
+    if (!knowledgeService) {
+      return res.code(503).send({ error: 'Knowledge base service is unavailable. Please check storage configuration.' });
+    }
     try {
       const userId = (req as any).userId || 'default';
       const { name, description, embeddingModel, chunkSize, chunkOverlap } = req.body as any;
@@ -36,6 +39,9 @@ export function registerKnowledgeRoutes(server: FastifyInstance, deps: Knowledge
 
   // GET /api/v1/knowledge-bases - List knowledge bases
   server.get('/api/v1/knowledge-bases', async (req, res) => {
+    if (!knowledgeService) {
+      return res.code(503).send({ error: 'Knowledge base service is unavailable. Please check storage configuration.' });
+    }
     try {
       const userId = (req as any).userId || 'default';
       const kbs = await knowledgeService.listKnowledgeBases(userId);

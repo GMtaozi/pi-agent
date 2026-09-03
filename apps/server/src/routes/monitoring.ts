@@ -7,6 +7,10 @@ export function registerMonitoringRoutes(server: FastifyInstance, deps: ServerDe
     return deps.monitoring.getDashboardData();
   });
 
+  server.get('/api/monitoring/stats', async () => {
+    return deps.monitoring.getDashboardData();
+  });
+
   server.get('/api/monitoring/metrics', async () => {
     return deps.monitoring.getMetricsSummary();
   });
@@ -54,32 +58,31 @@ export function registerMonitoringRoutes(server: FastifyInstance, deps: ServerDe
   });
 
    
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-  server.get('/api/monitoring/ws', { websocket: true }, (connection: any, _req: any) => {
+  // WebSocket 端点：实时监控推送
+  server.get('/api/monitoring/ws', { websocket: true }, (socket: any, _req: any) => {
     console.log('Monitoring WebSocket client connected');
-    if (connection.socket && typeof connection.socket.send === 'function') {
-      connection.socket.send(JSON.stringify({
+    if (socket && typeof socket.send === 'function') {
+      socket.send(JSON.stringify({
         type: 'connected',
         data: deps.monitoring.getDashboardData()
       }));
     }
     const interval = setInterval(() => {
-      if (connection.socket.readyState === 1) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+      if (socket.readyState === 1) {
         const alerts = deps.monitoring.getAlerts().filter((a: any) => !a.acknowledged);
         if (alerts.length > 0) {
-          connection.socket.send(JSON.stringify({
+          socket.send(JSON.stringify({
             type: 'alerts',
             data: alerts
           }));
         }
       }
     }, 5000);
-    connection.socket.on('close', () => {
+    socket.on('close', () => {
       clearInterval(interval);
       console.log('Monitoring WebSocket client disconnected');
     });
-    connection.socket.on('error', (err: Error) => {
+    socket.on('error', (err: Error) => {
       console.error('Monitoring WebSocket error:', err);
       clearInterval(interval);
     });

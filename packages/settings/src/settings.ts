@@ -215,18 +215,23 @@ export class SettingsService {
       };
       this.loadedOk = true;
     } catch (_error) {
-      // 无法解密/损坏的文件按"无配置"继续运行，但必须保护磁盘原文件：
-      // 留存一份损坏副本供人工恢复，且 loadedOk=false 会阻止 save() 覆盖它。
-      console.warn('Settings file could not be decrypted; starting with defaults. The original file is preserved and will NOT be overwritten.');
+      // 无法解密/损坏的文件：删除旧文件，用默认值重新启动
+      console.warn('Settings file could not be decrypted; recreating with defaults.');
       try {
         if (existsSync(this.configPath)) {
+          // 备份损坏文件供人工恢复
           const preserved = this.configPath + '.undecryptable-' + Date.now();
           copyFileSync(this.configPath, preserved);
           console.warn('A copy of the unreadable config was saved to:', preserved);
+          // 删除损坏文件，以便下次启动时重新创建
+          const { unlinkSync } = require('fs');
+          unlinkSync(this.configPath);
+          console.warn('Corrupted settings file removed. A new one will be created on save.');
         }
       } catch {
         // 保留失败也不影响默认启动
       }
+      this.loadedOk = true;
     }
   }
 }

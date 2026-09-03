@@ -61,6 +61,34 @@ export function registerAgentRoutes(server: FastifyInstance, deps: ServerDeps): 
     }
   });
 
+  // Create agent directly (without AI generation)
+  server.post('/api/agents', async (req, res) => {
+    try {
+      const agentService = (deps as any).agentService;
+      if (!agentService) {
+        return res.status(503).send({ error: 'Agent service not available' });
+      }
+      const { name, description, model, systemPrompt, temperature, tools } = req.body as any;
+      if (!name) {
+        return res.status(400).send({ error: 'Name is required' });
+      }
+      const agent = await agentService.createAgent({
+        name,
+        description,
+        model: model || 'gpt-4o',
+        systemPrompt,
+        temperature,
+        tools,
+        userId: (req as any).userId,
+        tenantId: (req as any).tenantId,
+      });
+      return res.status(201).send(agent);
+    } catch (err) {
+      req.log.error({ err }, 'Create agent failed');
+      return res.status(500).send({ error: 'Failed to create agent' });
+    }
+  });
+
   // List agents
   server.get('/api/agents', async (req, res) => {
     try {

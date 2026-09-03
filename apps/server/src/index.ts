@@ -809,51 +809,57 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
 
 
    
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-  server.get('/ws', { websocket: true }, (connection: any, req: any) => {
-    // Authenticate WebSocket connection via query token
-    // req.url in websocket upgrade contains the path + query string
+  // WebSocket 端点：实时推送调试步骤
+  server.get('/ws', { websocket: true }, (socket: any, req: any) => {
+    // 安全检查：确保是 WebSocket 连接
+    if (!socket || typeof socket.close !== 'function') {
+      // 非 WebSocket 请求，返回 426 Upgrade Required
+      try {
+        req.raw.writeHead(426, { 'Content-Type': 'text/plain' });
+        req.raw.end('Upgrade Required');
+      } catch {}
+      return;
+    }
+
+    // 从 query 参数获取 token
     const queryString = req.url?.split('?')[1] || '';
     const token = new URLSearchParams(queryString).get('token');
     if (!token) {
-      connection.socket.close(4001, 'Authentication required');
+      socket.close(4001, 'Authentication required');
       return;
     }
 
-    // Verify JWT using existing auth utility
+    // 验证 JWT
     try {
       const payload = verifyAccessToken(token);
-      // AuthTokenPayload uses 'sub' for user ID
       if (!payload?.sub) {
-        connection.socket.close(4001, 'Invalid token');
+        socket.close(4001, 'Invalid token');
         return;
       }
     } catch {
-      connection.socket.close(4001, 'Invalid token');
+      socket.close(4001, 'Invalid token');
       return;
     }
 
-    wsClients.add(connection.socket);
+    wsClients.add(socket);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-    connection.socket.on('message', (message: any) => {
+    socket.on('message', (message: any) => {
       try {
         const data = JSON.parse(message.toString());
-        // Client can subscribe to a debug session
         if (data.type === 'subscribe' && data.debugSessionId) {
-          connection.socket.debugSessionId = data.debugSessionId;
+          socket.debugSessionId = data.debugSessionId;
         }
       } catch {
         // Ignore invalid messages
       }
     });
 
-    connection.socket.on('close', () => {
-      wsClients.delete(connection.socket);
+    socket.on('close', () => {
+      wsClients.delete(socket);
     });
-    connection.socket.on('error', (err: Error) => {
+    socket.on('error', (err: Error) => {
       server.log.error(err);
-      wsClients.delete(connection.socket);
+      wsClients.delete(socket);
     });
   });
 

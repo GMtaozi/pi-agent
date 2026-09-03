@@ -111,6 +111,48 @@ export class AgentService {
     return result.rows.map((r: any) => this.mapRowToAgent(r));
   }
 
+  async createAgent(data: {
+    name: string;
+    description?: string;
+    model?: string;
+    systemPrompt?: string;
+    temperature?: number;
+    tools?: string[];
+    userId?: string;
+    tenantId?: string;
+  }): Promise<Agent> {
+    const id = this.generateId();
+    const now = new Date().toISOString();
+    const agent: Agent = {
+      id,
+      name: data.name,
+      description: data.description,
+      systemPrompt: data.systemPrompt || 'You are a helpful assistant.',
+      model: data.model || 'gpt-4o',
+      provider: undefined,
+      temperature: data.temperature ?? 0.7,
+      maxTokens: 2000,
+      tools: JSON.stringify(data.tools || []),
+      knowledgeBaseIds: undefined,
+      icon: '🤖',
+      status: 'draft',
+      tenantId: data.tenantId || 'default',
+      createdBy: data.userId,
+      createdAt: now,
+      updatedAt: now,
+      metadata: undefined,
+    };
+
+    await this.db.query('agents', `INSERT INTO agents (id, name, description, systemPrompt, model, provider, temperature, maxTokens, tools, icon, status, tenantId, createdBy, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+      agent.id, agent.name, agent.description, agent.systemPrompt, agent.model,
+      agent.provider, agent.temperature, agent.maxTokens, agent.tools, agent.icon,
+      agent.status, agent.tenantId, agent.createdBy, agent.createdAt, agent.updatedAt
+    ]);
+
+    this.logger.info(`Agent created: ${agent.id} (${agent.name})`);
+    return agent;
+  }
+
   async getAgent(id: string): Promise<Agent | null> {
     const result: QueryResult = await this.db.query('agents', 'SELECT * FROM agents WHERE id = ?', [id]);
     if (!result.rows[0]) return null;
