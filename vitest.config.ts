@@ -6,6 +6,11 @@ export default defineConfig({
     pool: 'vmThreads',
     environment: 'node',
     include: ['**/*.{test,spec}.{js,ts}'],
+    env: {
+      API_KEY_ENCRYPTION_KEY: 'test-encryption-key-32-chars!',
+      JWT_SECRET: 'test-jwt-secret',
+      REFRESH_SECRET: 'test-refresh-secret',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

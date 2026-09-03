@@ -100,7 +100,7 @@ export function encryptApiKey(apiKey: string): string {
   const cipher = createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(apiKey, 'utf8'), cipher.final()]);
   const authTag = cipher.getAuthTag();
-  return ['enc:', iv.toString('hex'), authTag.toString('hex'), encrypted.toString('hex')].join(':');
+  return ['enc', iv.toString('hex'), authTag.toString('hex'), encrypted.toString('hex')].join(':');
 }
 
 export function decryptApiKey(encrypted: string): string {
@@ -108,7 +108,7 @@ export function decryptApiKey(encrypted: string): string {
   const parts = encrypted.split(':');
   if (parts.length !== 4) return encrypted;
 
-  const [, ivHex, tagHex, dataHex] = parts;
+  const [ivHex, tagHex, dataHex] = parts.slice(1);
   const key = Buffer.from(API_KEY_ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32));
   const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivHex, 'hex'));
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
