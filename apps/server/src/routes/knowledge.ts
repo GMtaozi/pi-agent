@@ -74,19 +74,38 @@ export function registerKnowledgeRoutes(server: FastifyInstance, deps: Knowledge
   });
 
   // POST /api/v1/knowledge-bases/:kbId/documents - Upload document
+  // Supports both multipart/form-data (preferred for large files) and JSON with base64.
   server.post('/api/v1/knowledge-bases/:kbId/documents', async (req, res) => {
     try {
       const { kbId } = req.params as { kbId: string };
       const userId = (req as any).userId || 'default';
 
-      // For now, accept JSON with base64 file data
-      const { fileName, fileData, mimeType } = req.body as any;
+      let fileName: string | undefined;
+      let buffer: Buffer | undefined;
+      let mimeType: string | undefined;
 
-      if (!fileName || !fileData) {
-        return res.code(400).send({ error: 'fileName and fileData are required' });
+      // Try multipart first
+      if (req.isMultipart()) {
+        const file = await req.file();
+        if (file) {
+          fileName = file.filename;
+          buffer = await file.toBuffer();
+          mimeType = file.mimetype;
+        }
+      } else {
+        // Fallback to JSON with base64
+        const body = req.body as any;
+        fileName = body?.fileName;
+        mimeType = body?.mimeType;
+        if (body?.fileData) {
+          buffer = Buffer.from(body.fileData, 'base64');
+        }
       }
 
-      const buffer = Buffer.from(fileData, 'base64');
+      if (!fileName || !buffer) {
+        return res.code(400).send({ error: 'fileName and fileData (or multipart file) are required' });
+      }
+
       const doc = await knowledgeService.uploadDocument(kbId, userId, {
         name: fileName,
         data: buffer,

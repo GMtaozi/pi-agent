@@ -1,37 +1,47 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, matchPath } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
-import ChatPage from './pages/ChatPage';
-import SettingsPage from './pages/SettingsPage';
-import WorkspacePage from './pages/WorkspacePage';
-import MemoryPage from './pages/MemoryPage';
-import SkillsPage from './pages/SkillsPage';
-import SkillMarketPage from './pages/SkillMarketPage';
-import SkillNewPage from './pages/SkillNewPage';
-import SkillDetailPage from './pages/SkillDetailPage';
-import SchedulePage from './pages/SchedulePage';
-import GovernancePage from './pages/GovernancePage';
-import AuditLogPage from './pages/AuditLogPage';
-import OrchestratorPage from './pages/OrchestratorPage';
-import WorkflowEditorPage from './pages/WorkflowEditorPage';
-import WorkflowPage from './pages/WorkflowPage';
-import MonitoringPage from './pages/MonitoringPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import ExecutionMonitoringPage from './pages/ExecutionMonitoringPage';
-import KnowledgeBasePage from './pages/KnowledgeBasePage';
-import AgentCreatePage from './pages/AgentCreatePage';
-import TrajectoryPage from './pages/TrajectoryPage';
-import AgentEvolutionPage from './pages/AgentEvolutionPage';
-import MultiAgentPage from './pages/MultiAgentPage';
-import DevWorkbenchPage from './pages/DevWorkbenchPage';
-import ProductWorkbenchPage from './pages/ProductWorkbenchPage';
-import AnalystWorkbenchPage from './pages/AnalystWorkbenchPage';
 import Sidebar from './components/Sidebar';
 import SettingsDrawer from './components/SettingsDrawer';
 import { WorkspaceProvider, useWorkspace } from './contexts/WorkspaceContext';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { apiFetch } from './lib/api';
 import { Menu } from 'lucide-react';
+
+// Lazy-loaded pages
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const WorkspacePage = lazy(() => import('./pages/WorkspacePage'));
+const MemoryPage = lazy(() => import('./pages/MemoryPage'));
+const SkillsPage = lazy(() => import('./pages/SkillsPage'));
+const SkillMarketPage = lazy(() => import('./pages/SkillMarketPage'));
+const SkillNewPage = lazy(() => import('./pages/SkillNewPage'));
+const SkillDetailPage = lazy(() => import('./pages/SkillDetailPage'));
+const SchedulePage = lazy(() => import('./pages/SchedulePage'));
+const GovernancePage = lazy(() => import('./pages/GovernancePage'));
+const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
+const OrchestratorPage = lazy(() => import('./pages/OrchestratorPage'));
+const WorkflowEditorPage = lazy(() => import('./pages/WorkflowEditorPage'));
+const WorkflowPage = lazy(() => import('./pages/WorkflowPage'));
+const MonitoringPage = lazy(() => import('./pages/MonitoringPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const ExecutionMonitoringPage = lazy(() => import('./pages/ExecutionMonitoringPage'));
+const KnowledgeBasePage = lazy(() => import('./pages/KnowledgeBasePage'));
+const AgentCreatePage = lazy(() => import('./pages/AgentCreatePage'));
+const TrajectoryPage = lazy(() => import('./pages/TrajectoryPage'));
+const AgentEvolutionPage = lazy(() => import('./pages/AgentEvolutionPage'));
+const MultiAgentPage = lazy(() => import('./pages/MultiAgentPage'));
+const DevWorkbenchPage = lazy(() => import('./pages/DevWorkbenchPage'));
+const ProductWorkbenchPage = lazy(() => import('./pages/ProductWorkbenchPage'));
+const AnalystWorkbenchPage = lazy(() => import('./pages/AnalystWorkbenchPage'));
+
+function PageLoader() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--text-secondary)' }}>
+      <div className="spinner" style={{ width: 24, height: 24, border: '2px solid var(--border-color)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    </div>
+  );
+}
 
 export type Page = 'chat'
   | 'settings'
@@ -160,35 +170,37 @@ function AppContent() {
           <Menu size={20} />
         </button>
         <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<ChatPage onToggleSidebar={toggleSidebar} />} />
-            <Route path="/workspace/:workspaceId" element={<ChatPage onToggleSidebar={toggleSidebar} />} />
-            <Route path="/workspace/:workspaceId/session/:sessionId" element={<ChatPage onToggleSidebar={toggleSidebar} />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/workspace" element={<WorkspacePage />} />
-            <Route path="/memory" element={<MemoryPage />} />
-            <Route path="/skills" element={<SkillsPage />} />
-            <Route path="/skills/market" element={<SkillMarketPage />} />
-            <Route path="/skills/new" element={<SkillNewPage />} />
-            <Route path="/skills/:id" element={<SkillDetailPage />} />
-            <Route path="/schedule" element={<SchedulePage />} />
-            <Route path="/governance" element={<GovernancePage />} />
-            <Route path="/audit-log" element={<AuditLogPage />} />
-            <Route path="/orchestrator" element={<OrchestratorPage />} />
-            <Route path="/workflow" element={<WorkflowPage />} />
-            <Route path="/workflow-editor" element={<WorkflowEditorPage />} />
-            <Route path="/monitoring" element={<MonitoringPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/execution-monitoring" element={<ExecutionMonitoringPage />} />
-            <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
-            <Route path="/agent-create" element={<AgentCreatePage />} />
-            <Route path="/trajectory" element={<TrajectoryPage />} />
-            <Route path="/evolution" element={<AgentEvolutionPage />} />
-            <Route path="/multi-agent" element={<MultiAgentPage />} />
-            <Route path="/dev-workbench" element={<DevWorkbenchPage />} />
-            <Route path="/product-workbench" element={<ProductWorkbenchPage />} />
-            <Route path="/analyst-workbench" element={<AnalystWorkbenchPage />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<ChatPage onToggleSidebar={toggleSidebar} />} />
+              <Route path="/workspace/:workspaceId" element={<ChatPage onToggleSidebar={toggleSidebar} />} />
+              <Route path="/workspace/:workspaceId/session/:sessionId" element={<ChatPage onToggleSidebar={toggleSidebar} />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/workspace" element={<WorkspacePage />} />
+              <Route path="/memory" element={<MemoryPage />} />
+              <Route path="/skills" element={<SkillsPage />} />
+              <Route path="/skills/market" element={<SkillMarketPage />} />
+              <Route path="/skills/new" element={<SkillNewPage />} />
+              <Route path="/skills/:id" element={<SkillDetailPage />} />
+              <Route path="/schedule" element={<SchedulePage />} />
+              <Route path="/governance" element={<GovernancePage />} />
+              <Route path="/audit-log" element={<AuditLogPage />} />
+              <Route path="/orchestrator" element={<OrchestratorPage />} />
+              <Route path="/workflow" element={<WorkflowPage />} />
+              <Route path="/workflow-editor" element={<WorkflowEditorPage />} />
+              <Route path="/monitoring" element={<MonitoringPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/execution-monitoring" element={<ExecutionMonitoringPage />} />
+              <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+              <Route path="/agent-create" element={<AgentCreatePage />} />
+              <Route path="/trajectory" element={<TrajectoryPage />} />
+              <Route path="/evolution" element={<AgentEvolutionPage />} />
+              <Route path="/multi-agent" element={<MultiAgentPage />} />
+              <Route path="/dev-workbench" element={<DevWorkbenchPage />} />
+              <Route path="/product-workbench" element={<ProductWorkbenchPage />} />
+              <Route path="/analyst-workbench" element={<AnalystWorkbenchPage />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
       </main>
 

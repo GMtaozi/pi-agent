@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
   listKnowledgeBases, getKnowledgeBase, createKnowledgeBase, deleteKnowledgeBase,
-  listDocuments, uploadDocument, deleteDocument, searchKnowledgeBase,
+  listDocuments, uploadDocumentMultipart, deleteDocument, searchKnowledgeBase,
   type KnowledgeBase, type Document
 } from '../lib/api';
 import { getFriendlyMessage } from '../lib/errors';
@@ -114,23 +114,13 @@ export default function KnowledgeBasePage() {
     if (!uploadFile || !selectedKb) return;
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        try {
-          await uploadDocument(selectedKb.id, uploadFile.name, base64, uploadFile.type);
-          setShowUpload(false);
-          setUploadFile(null);
-          await fetchDetail(selectedKb);
-        } catch (e) {
-          setError(getFriendlyMessage(e));
-        } finally {
-          setUploading(false);
-        }
-      };
-      reader.readAsDataURL(uploadFile);
+      await uploadDocumentMultipart(selectedKb.id, uploadFile);
+      setShowUpload(false);
+      setUploadFile(null);
+      await fetchDetail(selectedKb);
     } catch (e) {
       setError(getFriendlyMessage(e));
+    } finally {
       setUploading(false);
     }
   };

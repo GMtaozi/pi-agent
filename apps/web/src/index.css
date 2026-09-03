@@ -4836,3 +4836,7 @@ html, body {
   background: var(--accent-color);
   color: #fff;
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

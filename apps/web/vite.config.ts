@@ -36,9 +36,13 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           charts: ['recharts'],
           icons: ['lucide-react'],
+          markdown: ['react-markdown', 'remark-gfm', 'rehype-sanitize'],
+          syntax: ['react-syntax-highlighter'],
+          flow: ['@xyflow/react'],
         },
       },
     },
+    chunkSizeWarningLimit: 800,
   },
   optimizeDeps: {
     force: false

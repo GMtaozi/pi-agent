@@ -12,6 +12,7 @@ const logger = pino({ level: 'info' });
 import http from 'http';
 import { createHmac, timingSafeEqual } from 'crypto';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import { WorkspaceService } from '@workforge/workspace';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerKnowledgeRoutes } from './routes/knowledge.js';
@@ -203,6 +204,12 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     // CSP is left unmanaged here to avoid breaking the existing SPA; the other
     // security headers (incl. X-Content-Type-Options) are still applied.
     contentSecurityPolicy: false
+  });
+  server.register(multipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB
+      files: 1,
+    },
   });
   server.register(rateLimit, {
     max: 30,
