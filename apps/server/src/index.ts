@@ -35,21 +35,26 @@ import { registerDebugRoutes } from './routes/debug.js';
 import { ExecutionTracker, CostAnalyzer, OptimizationEngine } from '@workforge/monitoring';
 import { registerMemoryRoutes } from './routes/memory.js';
 
-// Monkey-patch global fetch to disable HTTP keep-alive by default.
-// This prevents hangs caused by stale pooled connections, especially
-// when upstream providers silently drop keep-alive sockets.
-if (typeof globalThis.fetch === 'function' && process.env.DISABLE_FETCH_KEEPALIVE !== 'true') {
+// P1 Fix: 使用共享的 keepAlive agent 替代全局禁用
+// 共享长连接减少 TCP+TLS 握手开销，提高 LLM API 调用性能
+const sharedFetchAgent = new http.Agent({
+  keepAlive: true,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+  timeout: 30000,
+});
+
+if (typeof globalThis.fetch === 'function' && process.env.DISABLE_FETCH_KEEPALIVE === 'true') {
   const originalFetch = globalThis.fetch.bind(globalThis);
-   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
   (globalThis as any).fetch = async (input: RequestInfo | URL, init?: any) => {
     if (!init) init = {};
     if (!init.agent) {
-      init.agent = new http.Agent({ keepAlive: false });
+      init.agent = sharedFetchAgent;
     }
     return originalFetch(input, init);
   };
-  logger.info('Global fetch patched: keepAlive disabled');
+  logger.info('Global fetch patched: using shared keepAlive agent');
 }
 import { MemoryService } from '@workforge/memory';
 import { ScheduleService } from '@workforge/schedule';
@@ -101,11 +106,16 @@ const __dirname = dirname(__filename);
 // Sessions are authenticated via a signed Bearer token. The tenant is derived
 // from the verified token, never from a client-supplied `x-tenant-id` header,
 // so tenants cannot be forged.
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-insecure-session-secret-change-in-production';
+const SESSION_SECRET = process.env.SESSION_SECRET;
+
+if (!SESSION_SECRET) {
+  throw new Error('FATAL: SESSION_SECRET environment variable is required');
+}
+const sessionSecret: string = SESSION_SECRET;
 
 function signSessionToken(payload: { sub: string; tenantId: string }): string {
   const body = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
-  const sig = createHmac('sha256', SESSION_SECRET).update(body).digest('base64url');
+  const sig = createHmac('sha256', sessionSecret).update(body).digest('base64url');
   return `${body}.${sig}`;
 }
 
@@ -114,7 +124,7 @@ function verifySessionToken(token?: string): { sub: string; tenantId: string } |
   const parts = token.split('.');
   if (parts.length !== 2) return null;
   const [body, sig] = parts;
-  const expected = createHmac('sha256', SESSION_SECRET).update(body).digest('base64url');
+  const expected = createHmac('sha256', sessionSecret).update(body).digest('base64url');
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
@@ -228,8 +238,9 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
     (request as any).tenantId = tenantId;
     request.log = request.log.child({ requestId, tenantId });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-    request.log.info({ method: request.method, url: request.url, remoteAddress: (request.raw as any).remoteAddress }, 'HTTP request start');
+    // S7 Fix: 剥离 URL 中的敏感参数后再记录
+    const safeUrl = request.url?.replace(/([?&])token=[^&]*/gi, '$1token=***') || '';
+    request.log.info({ method: request.method, url: safeUrl, remoteAddress: (request.raw as any).remoteAddress }, 'HTTP request start');
   });
 
   // Session authentication. Bypassed in test mode so the automated test suite
@@ -240,7 +251,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
       const url = (request.url || '').split('?')[0];
       if (request.method === 'OPTIONS') return;
       if ((request.headers['upgrade'] || '').toLowerCase() === 'websocket') return;
-      if (PUBLIC_PATHS.has(url) || url.startsWith('/api/auth/')) return;
+      if (PUBLIC_PATHS.has(url) || url.startsWith('/api/auth/') || url.startsWith('/api/v1/auth/')) return;
 
       const authHeader = request.headers['authorization'];
       const headerToken = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
@@ -412,11 +423,14 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     } });
     metrics = new MetricsCollector();
     monitoring = new MonitoringService();
-    setInterval(() => {
+    const metricsInterval = setInterval(() => {
       const memoryUsage = process.memoryUsage().heapUsed / 1024 / 1024;
       const cpuUsage = process.cpuUsage().user / 1000000;
       monitoring.updateSystemMetrics(memoryUsage, cpuUsage);
     }, 5000);
+    // P4 Fix: 保存句柄以便清理
+    process.on('SIGTERM', () => clearInterval(metricsInterval));
+    process.on('SIGINT', () => clearInterval(metricsInterval));
   }
 
   const sessionWorkspaces = new Map<string, string>();
@@ -522,17 +536,25 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
   // Auth: backward-compatible login (legacy session token)
   // -------------------------------------------------------------------------
   server.post('/api/auth/login', async (req, res) => {
-    const { password, tenantId } = (req.body || {}) as { password?: string; tenantId?: string };
+    const { password } = (req.body || {}) as { password?: string };
     const adminPassword = process.env.ADMIN_PASSWORD;
+    const allowOpenLogin = process.env.ALLOW_OPEN_LOGIN === 'true';
+    
     if (adminPassword) {
       if (password !== adminPassword) {
         return res.code(401).send({ error: 'Invalid credentials' });
       }
+    } else if (!allowOpenLogin) {
+      // S4 Fix: 未设置 ADMIN_PASSWORD 且未显式允许开放登录时，拒绝登录
+      logger.error('Login rejected: ADMIN_PASSWORD not set and ALLOW_OPEN_LOGIN is not true');
+      return res.code(403).send({ error: 'Login disabled: ADMIN_PASSWORD not configured' });
     } else {
-      logger.warn('ADMIN_PASSWORD not set; auth login is open in development mode.');
+      logger.warn('ADMIN_PASSWORD not set; login allowed via ALLOW_OPEN_LOGIN');
     }
-    const token = signSessionToken({ sub: 'admin', tenantId: tenantId || 'default' });
-    return { token, tenantId: tenantId || 'default' };
+    
+    // S3 Fix: tenantId 由服务端派生，不接受客户端传入
+    const token = signSessionToken({ sub: 'admin', tenantId: 'default' });
+    return { token, tenantId: 'default' };
   });
 
   server.get('/api/auth/verify', async (req) => {

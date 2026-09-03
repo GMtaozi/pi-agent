@@ -120,6 +120,19 @@ describe('auth', () => {
       expect(decrypted).toBe(original);
     });
 
+    it('should produce different ciphertexts for same key (random salt)', () => {
+      const original = 'wf_test-api-key-12345';
+      const encrypted1 = encryptApiKey(original);
+      const encrypted2 = encryptApiKey(original);
+
+      // Different salt means different ciphertext
+      expect(encrypted1).not.toBe(encrypted2);
+      
+      // Both should decrypt to same value
+      expect(decryptApiKey(encrypted1)).toBe(original);
+      expect(decryptApiKey(encrypted2)).toBe(original);
+    });
+
     it('should return original if not encrypted format', () => {
       const plain = 'wf_not-encrypted-key';
       expect(decryptApiKey(plain)).toBe(plain);

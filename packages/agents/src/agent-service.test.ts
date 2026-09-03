@@ -175,9 +175,13 @@ describe('AgentService', () => {
     });
 
     it('should not update with disallowed columns', async () => {
-      db.query.mockResolvedValueOnce({
-        rows: [{ id: 'agent_1', name: 'Test', systemPrompt: 'test', model: 'gpt-4o' }],
-      });
+      db.query
+        .mockResolvedValueOnce({
+          rows: [{ id: 'agent_1', name: 'Test', systemPrompt: 'test', model: 'gpt-4o' }],
+        })
+        .mockResolvedValueOnce({
+          rows: [{ id: 'agent_1', name: 'Test', systemPrompt: 'test', model: 'gpt-4o' }],
+        });
 
       const updated = await service.updateAgent('agent_1', { id: 'hack' } as any);
       expect(updated).not.toBeNull();

@@ -1,22 +1,18 @@
-import { randomBytes, createCipheriv, createDecipheriv } from 'crypto';
+import { randomBytes, createCipheriv, createDecipheriv, scryptSync } from 'crypto';
 
 // Encrypts secrets (e.g. custom model API keys) at rest in the database using
-// AES-256-GCM. The key is derived from DB_ENCRYPTION_KEY; if unset a loud
-// warning is emitted and an insecure default is used (development only).
+// AES-256-GCM. The key is derived from DB_ENCRYPTION_KEY.
 const ALGO = 'aes-256-gcm';
 const PREFIX = 'enc:';
-let warned = false;
 
 function getKey(): Buffer {
   const secret = process.env.DB_ENCRYPTION_KEY;
   if (!secret) {
-    if (!warned) {
-      console.warn('[security] DB_ENCRYPTION_KEY not set; using insecure default key. Set it in production.');
-      warned = true;
-    }
-    return Buffer.from('dev-insecure-db-key-change-me-xxxx'.slice(0, 32));
+    throw new Error('FATAL: DB_ENCRYPTION_KEY environment variable is required');
   }
-  return Buffer.from(secret.padEnd(32, '0').slice(0, 32));
+  // S5 Fix: 使用 scrypt 派生密钥
+  const salt = Buffer.from('workforge-db-encryption-salt-v1', 'utf8');
+  return scryptSync(secret, salt, 32);
 }
 
 export function encryptSecret(plaintext: string): string {

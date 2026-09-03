@@ -10,6 +10,8 @@ export default defineConfig({
       API_KEY_ENCRYPTION_KEY: 'test-encryption-key-32-chars!',
       JWT_SECRET: 'test-jwt-secret',
       REFRESH_SECRET: 'test-refresh-secret',
+      SESSION_SECRET: 'test-session-secret',
+      DB_ENCRYPTION_KEY: 'test-db-encryption-key',
     },
     coverage: {
       provider: 'v8',

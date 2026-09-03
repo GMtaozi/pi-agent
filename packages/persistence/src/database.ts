@@ -149,12 +149,10 @@ export class SqliteDatabase {
   }
 
   getData(): Record<string, any[]> {
-    const data: Record<string, any[]> = {};
-    const tables = this.sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name != 'schema_migrations'").all();
-    for (const table of tables) {
-      data[table.name] = this.sqlite.prepare(`SELECT * FROM ${table.name}`).all();
-    }
-    return data;
+    // P2 Fix: 不再一次性加载全库，改为返回空对象
+    // 调用者应使用 query() 按需查询特定表
+    console.warn('[deprecated] getData() loads entire DB into memory. Use query() instead.');
+    return {};
   }
 
   setData(table: string, rows: any[]): void {

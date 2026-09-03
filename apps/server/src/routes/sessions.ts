@@ -343,6 +343,8 @@ export function registerSessionRoutes(server: FastifyInstance, deps: SessionRout
       if (!deleted) {
         return res.status(404).send({ error: 'Session not found' });
       }
+      // P3 Fix: 清理 sessionWorkspaces 防止内存泄漏
+      deps.sessionWorkspaces.delete(id);
       return { ok: true };
     } catch (err) {
       server.log.error(err);

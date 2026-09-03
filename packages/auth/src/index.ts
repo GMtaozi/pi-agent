@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { randomBytes, createCipheriv, createDecipheriv, createHmac, timingSafeEqual } from 'crypto';
+import { randomBytes, createCipheriv, createDecipheriv, createHmac, timingSafeEqual, scryptSync } from 'crypto';
 
 export interface User {
   id: string;
@@ -28,12 +28,29 @@ export interface AuthResult {
   expiresIn: number;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-in-production';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'dev-refresh-secret-change-in-production';
-const API_KEY_ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_KEY || 'dev-api-key-encryption-key-change-me';
+// S1 Fix: 缺失即报错，不使用回退默认值
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+const API_KEY_ENCRYPTION_KEY = process.env.API_KEY_ENCRYPTION_KEY;
+
+if (!JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required');
+}
+if (!REFRESH_SECRET) {
+  throw new Error('FATAL: REFRESH_SECRET environment variable is required');
+}
+if (!API_KEY_ENCRYPTION_KEY) {
+  throw new Error('FATAL: API_KEY_ENCRYPTION_KEY environment variable is required');
+}
+
 const SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = 60 * 60; // 1 hour in seconds
 const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7 days in seconds
+
+// S5 Fix: 使用 scrypt 派生加密密钥，而非零填充
+function deriveKey(secret: string, salt: Buffer): Buffer {
+  return scryptSync(secret, salt, 32);
+}
 
 // Base64URL encode/decode helpers
 function base64UrlEncode(data: Buffer | string): string {
@@ -93,23 +110,25 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-// API Key encryption (AES-256-GCM)
+// API Key encryption (AES-256-GCM with scrypt key derivation)
 export function encryptApiKey(apiKey: string): string {
-  const key = Buffer.from(API_KEY_ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32));
+  const salt = randomBytes(16);
+  const key = deriveKey(API_KEY_ENCRYPTION_KEY, salt);
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(apiKey, 'utf8'), cipher.final()]);
   const authTag = cipher.getAuthTag();
-  return ['enc', iv.toString('hex'), authTag.toString('hex'), encrypted.toString('hex')].join(':');
+  return ['enc', salt.toString('hex'), iv.toString('hex'), authTag.toString('hex'), encrypted.toString('hex')].join(':');
 }
 
 export function decryptApiKey(encrypted: string): string {
   if (!encrypted || !encrypted.startsWith('enc:')) return encrypted;
   const parts = encrypted.split(':');
-  if (parts.length !== 4) return encrypted;
+  if (parts.length !== 5) return encrypted;
 
-  const [ivHex, tagHex, dataHex] = parts.slice(1);
-  const key = Buffer.from(API_KEY_ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32));
+  const [saltHex, ivHex, tagHex, dataHex] = parts.slice(1);
+  const salt = Buffer.from(saltHex, 'hex');
+  const key = deriveKey(API_KEY_ENCRYPTION_KEY, salt);
   const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivHex, 'hex'));
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
   const decrypted = Buffer.concat([decipher.update(Buffer.from(dataHex, 'hex')), decipher.final()]);
