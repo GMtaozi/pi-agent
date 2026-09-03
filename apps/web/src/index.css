@@ -4840,3 +4840,21 @@ html, body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* WebSocket indicator in Debug Panel */
+.ws-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+}
+
+.ws-indicator.connected {
+  color: #22c55e;
+}
+
+.ws-indicator.disconnected {
+  color: #ef4444;
+}

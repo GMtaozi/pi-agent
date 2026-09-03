@@ -14,6 +14,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import { WorkspaceService } from '@workforge/workspace';
+import { verifyAccessToken } from '@workforge/auth';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerKnowledgeRoutes } from './routes/knowledge.js';
 import { registerSessionRoutes } from './routes/sessions.js';
@@ -325,6 +326,20 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     }
   }
 
+  // Broadcast debug step to subscribers of a debug session
+  function broadcastDebugStep(debugSessionId: string, step: any): void {
+    const message = JSON.stringify({ type: 'debug-step', debugSessionId, step, ts: Date.now() });
+    for (const client of wsClients) {
+      if (client.debugSessionId === debugSessionId) {
+        try {
+          client.send(message);
+        } catch (err) {
+          server.log.error(err);
+        }
+      }
+    }
+  }
+
   if (options.testMode && options.services) {
     const mockServices = options.services;
     workspaceService = mockServices.workspaceService!;
@@ -471,6 +486,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     get optimizationEngine() { return optimizationEngine; },
     get agentService() { return agentService; },
     get debugManager() { return debugManager; },
+    get broadcastDebugStep() { return broadcastDebugStep; },
     wsClients,
     streamCallbacks,
     sessionWorkspaces,
@@ -768,14 +784,44 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
 
    
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-  server.get('/ws', { websocket: true }, (connection: any, _req: any) => {
-    wsClients.add(connection.socket);
-    if (connection.socket && typeof connection.socket.send === 'function') {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
-      connection.socket.on('message', (message: any) => {
-        connection.socket.send('echo: ' + message);
-      });
+  server.get('/ws', { websocket: true }, (connection: any, req: any) => {
+    // Authenticate WebSocket connection via query token
+    // req.url in websocket upgrade contains the path + query string
+    const queryString = req.url?.split('?')[1] || '';
+    const token = new URLSearchParams(queryString).get('token');
+    if (!token) {
+      connection.socket.close(4001, 'Authentication required');
+      return;
     }
+
+    // Verify JWT using existing auth utility
+    try {
+      const payload = verifyAccessToken(token);
+      // AuthTokenPayload uses 'sub' for user ID
+      if (!payload?.sub) {
+        connection.socket.close(4001, 'Invalid token');
+        return;
+      }
+    } catch {
+      connection.socket.close(4001, 'Invalid token');
+      return;
+    }
+
+    wsClients.add(connection.socket);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO(lint-any): 历史动态边界, 类型待收紧
+    connection.socket.on('message', (message: any) => {
+      try {
+        const data = JSON.parse(message.toString());
+        // Client can subscribe to a debug session
+        if (data.type === 'subscribe' && data.debugSessionId) {
+          connection.socket.debugSessionId = data.debugSessionId;
+        }
+      } catch {
+        // Ignore invalid messages
+      }
+    });
+
     connection.socket.on('close', () => {
       wsClients.delete(connection.socket);
     });

@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Play, Pause, SkipForward, Square, Bug, Eye, ChevronRight, ChevronDown,
-  Plus, Trash2, AlertCircle, CheckCircle, XCircle, Clock
+  Plus, Trash2, AlertCircle, CheckCircle, XCircle, Clock, Wifi, WifiOff
 } from 'lucide-react';
 import {
   createDebugSession, getDebugSession, addBreakpoint, removeBreakpoint,
   debugAction, getDebugSteps, getDebugVariables
 } from '../lib/debug-api';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const STEP_TYPE_ICONS: Record<string, any> = {
   user_message: { icon: '👤', color: '#3b82f6' },
@@ -25,6 +26,7 @@ export default function DebugPanel({ sessionId }: { sessionId: string }) {
   const [bpToolName, setBpToolName] = useState('');
   const [bpStepIndex, setBpStepIndex] = useState('');
   const [selectedStep, setSelectedStep] = useState<any>(null);
+  const debugSessionIdRef = useRef<string | null>(null);
 
   const loadDebugSession = useCallback(async () => {
     if (!sessionId) return;
@@ -32,11 +34,11 @@ export default function DebugPanel({ sessionId }: { sessionId: string }) {
     try {
       let dbg = await createDebugSession(sessionId).catch(() => null);
       if (!dbg) {
-        // Try to find existing session
         dbg = await getDebugSession(sessionId).catch(() => null);
       }
       if (dbg) {
         setDebugSession(dbg);
+        debugSessionIdRef.current = dbg.id;
         const [s, v] = await Promise.all([
           getDebugSteps(dbg.id),
           getDebugVariables(dbg.id),
@@ -53,15 +55,24 @@ export default function DebugPanel({ sessionId }: { sessionId: string }) {
 
   useEffect(() => {
     loadDebugSession();
-    // Poll for updates when running
-    const interval = setInterval(async () => {
-      if (debugSession?.status === 'running' || debugSession?.status === 'stepping') {
-        const s = await getDebugSteps(debugSession.id).catch(() => []);
-        setSteps(s);
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [loadDebugSession, debugSession?.status]);
+  }, [loadDebugSession]);
+
+  const handleWebSocketMessage = useCallback((data: any) => {
+    if (data.type === 'debug-step' && data.debugSessionId === debugSessionIdRef.current) {
+      setSteps(prev => [...prev, data.step]);
+    }
+  }, []);
+
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+  const { connected, error: wsError, send } = useWebSocket(wsUrl, handleWebSocketMessage);
+
+  // Subscribe to debug session when we have a debug session ID
+  useEffect(() => {
+    if (connected && debugSessionIdRef.current) {
+      send({ type: 'subscribe', debugSessionId: debugSessionIdRef.current });
+    }
+  }, [connected, send]);
 
   const handleAddBreakpoint = async () => {
     if (!debugSession) return;
@@ -114,6 +125,9 @@ export default function DebugPanel({ sessionId }: { sessionId: string }) {
               ● {debugSession.status}
             </span>
           )}
+          <span className={`ws-indicator ${connected ? 'connected' : 'disconnected'}`}>
+            {connected ? <Wifi size={12} /> : <WifiOff size={12} />}
+          </span>
         </div>
         <div className="debug-controls">
           <button onClick={() => handleAction('resume')} title="继续">
@@ -132,6 +146,7 @@ export default function DebugPanel({ sessionId }: { sessionId: string }) {
       </div>
 
       {error && <div className="debug-error">{error}</div>}
+      {wsError && <div className="debug-error">WebSocket: {wsError}</div>}
 
       {loading ? (
         <div className="debug-loading">加载调试会话...</div>
