@@ -486,5 +486,49 @@ export const migrations: Migration[] = [
       await db.query('agents', 'DROP TABLE IF EXISTS agents');
       await db.query('artifacts', 'DROP TABLE IF EXISTS artifacts');
     }
+  },
+  {
+    version: 23,
+    name: 'add-workflows-table',
+    up: async (db: Database) => {
+      await db.query('workflows', `
+        CREATE TABLE IF NOT EXISTS workflows (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          steps TEXT NOT NULL DEFAULT '[]',
+          triggers TEXT NOT NULL DEFAULT '[]',
+          status TEXT NOT NULL DEFAULT 'draft',
+          tenantId TEXT DEFAULT 'default',
+          createdBy TEXT,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL,
+          metadata TEXT
+        )
+      `);
+      await db.query('workflows', 'CREATE INDEX IF NOT EXISTS idx_workflows_status ON workflows(status)');
+      await db.query('workflows', 'CREATE INDEX IF NOT EXISTS idx_workflows_tenant ON workflows(tenantId)');
+      await db.query('workflows', 'CREATE INDEX IF NOT EXISTS idx_workflows_created ON workflows(createdAt DESC)');
+
+      await db.query('workflow_executions', `
+        CREATE TABLE IF NOT EXISTS workflow_executions (
+          id TEXT PRIMARY KEY,
+          workflowId TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'running',
+          input TEXT,
+          result TEXT,
+          error TEXT,
+          startedAt TEXT NOT NULL,
+          completedAt TEXT,
+          createdAt TEXT NOT NULL
+        )
+      `);
+      await db.query('workflow_executions', 'CREATE INDEX IF NOT EXISTS idx_wf_exec_workflow ON workflow_executions(workflowId)');
+      await db.query('workflow_executions', 'CREATE INDEX IF NOT EXISTS idx_wf_exec_status ON workflow_executions(status)');
+    },
+    down: async (db: Database) => {
+      await db.query('workflows', 'DROP TABLE IF EXISTS workflows');
+      await db.query('workflow_executions', 'DROP TABLE IF EXISTS workflow_executions');
+    }
   }
 ];

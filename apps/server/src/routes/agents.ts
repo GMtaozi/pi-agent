@@ -2,6 +2,36 @@ import type { FastifyInstance } from 'fastify';
 import type { ServerDeps } from './deps.js';
 
 export function registerAgentRoutes(server: FastifyInstance, deps: ServerDeps): void {
+  // Stream agent generation from description (SSE)
+  server.get('/api/agents/stream', async (req, res) => {
+    const { description, model, provider } = req.query as { description?: string; model?: string; provider?: string };
+    if (!description) {
+      return res.status(400).send({ error: 'Description is required' });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const agentService = (deps as any).agentService;
+    if (!agentService) {
+      return res.status(503).send({ error: 'Agent service not available' });
+    }
+
+    res.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    });
+
+    try {
+      const stream = agentService.streamAgentConfig({ description, model, provider });
+      for await (const event of stream) {
+        res.raw.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    } catch (err) {
+      res.raw.write(`data: ${JSON.stringify({ type: 'error', data: { message: err instanceof Error ? err.message : 'Unknown error' } })}\n\n`);
+    } finally {
+      res.raw.end();
+    }
+  });
   // Generate agent from natural language description
   server.post('/api/agents/from-description', async (req, res) => {
     try {

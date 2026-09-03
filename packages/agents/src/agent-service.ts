@@ -3,12 +3,16 @@
  */
 
 import type { Agent, QueryResult } from '@workforge/persistence';
+import type { ModelRuntime } from '@workforge/provider-runtime';
+import type { AssistantMessageEvent } from '@earendil-works/pi-ai';
 
 export interface GenerateAgentRequest {
   description: string;
   userId?: string;
   tenantId?: string;
   model?: string;
+  provider?: string;
+  stream?: boolean;
 }
 
 export interface GeneratedAgentConfig {
@@ -30,22 +34,43 @@ export class AgentService {
   private db: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private logger: any;
+  private modelRuntime?: ModelRuntime;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(db: any, logger: any) {
+  constructor(db: any, logger: any, modelRuntime?: ModelRuntime) {
     this.db = db;
     this.logger = logger;
+    this.modelRuntime = modelRuntime;
   }
 
   /**
    * Generate agent configuration from a natural language description.
-   * Uses a lightweight LLM call to produce a structured configuration.
+   * Uses real LLM when available, falls back to template.
    */
   async generateFromDescription(req: GenerateAgentRequest): Promise<Agent> {
-    const { description, userId, tenantId, model } = req;
+    const { description, userId, tenantId, model, provider } = req;
 
-    // Use LLM to generate structured config
-    const config = await this.callLLMForAgentConfig(description, model);
+    let config: GeneratedAgentConfig | null = null;
+
+    // Try real LLM first (streaming)
+    if (this.modelRuntime) {
+      try {
+        const stream = this.streamAgentConfig({ description, model, provider });
+        for await (const event of stream) {
+          if (event.type === 'config') {
+            config = event.data;
+            break;
+          }
+        }
+      } catch (err) {
+        this.logger.warn?.('LLM generation failed, falling back to template', { error: err });
+      }
+    }
+
+    // Fallback to template
+    if (!config) {
+      config = this.fallbackConfig(description);
+    }
 
     const now = new Date().toISOString();
     const agent: Agent = {
@@ -145,11 +170,20 @@ export class AgentService {
   }
 
   /**
-   * Call LLM to produce a structured agent configuration from description.
-   * Falls back to a template if no LLM is available.
+   * Stream agent configuration generation from a natural language description.
+   * Uses real LLM when available, falls back to template.
    */
-  private async callLLMForAgentConfig(description: string, model?: string): Promise<GeneratedAgentConfig> {
-    const systemPrompt = `You are an AI agent configuration generator. Given a user's natural language description of what they want an AI agent to do, produce a JSON configuration for the agent.
+  async *streamAgentConfig(req: GenerateAgentRequest): AsyncGenerator<{ type: string; data: any }> {
+    const { description, model, provider } = req;
+
+    yield { type: 'status', data: { message: '正在分析需求...' } };
+
+    // Try real LLM first
+    if (this.modelRuntime) {
+      try {
+        yield { type: 'status', data: { message: '正在调用 LLM 生成配置...' } };
+
+        const systemPrompt = `You are an AI agent configuration generator. Given a user's natural language description, produce a JSON configuration.
 
 Output ONLY valid JSON (no markdown, no explanation) with these fields:
 {
@@ -165,21 +199,53 @@ Output ONLY valid JSON (no markdown, no explanation) with these fields:
 }
 
 Rules:
-- systemPrompt must be detailed and actionable
-- temperature: 0.0-0.3 for factual tasks, 0.4-0.7 for balanced, 0.8-1.2 for creative
+- systemPrompt must be detailed and actionable (at least 5 bullet points)
+- temperature: 0.0-0.3 for factual, 0.4-0.7 for balanced, 0.8-1.2 for creative
 - tools: pick from [web-search, file-read, file-write, shell, code-interpreter, image-gen, knowledge-base]
 - icon: pick a relevant emoji
 
 User description: "${description}"`;
 
-    try {
-      // Try to use the project's model-runtime if available
-      const prompt = `${systemPrompt}\n\nGenerate the configuration now.`;
-      // For now, return a structured template based on description analysis
-      return this.fallbackConfig(description);
-    } catch {
-      return this.fallbackConfig(description);
+        const context = {
+          messages: [
+            { role: 'system' as const, content: systemPrompt },
+            { role: 'user' as const, content: `Generate the agent configuration now. Output ONLY valid JSON.` },
+          ],
+        };
+
+        const stream = this.modelRuntime.stream(
+          model || 'gpt-4o',
+          provider || 'openai',
+          context as any,
+          { timeout: 30000 }
+        );
+
+        let fullText = '';
+        for await (const event of stream) {
+          if (event.type === 'text_delta') {
+            fullText += (event as any).delta;
+            yield { type: 'token', data: { text: (event as any).delta } };
+          } else if (event.type === 'done') {
+            // Try to parse JSON from the response
+            const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const config = JSON.parse(jsonMatch[0]);
+              yield { type: 'config', data: config };
+              return;
+            }
+          } else if (event.type === 'error') {
+            throw event.error;
+          }
+        }
+      } catch (err) {
+        this.logger.warn?.('LLM stream failed, falling back to template', { error: err });
+      }
     }
+
+    // Fallback to template
+    yield { type: 'status', data: { message: '使用模板生成...' } };
+    const config = this.fallbackConfig(description);
+    yield { type: 'config', data: config };
   }
 
   /**

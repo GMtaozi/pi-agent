@@ -29,6 +29,8 @@ export { ApprovalRepository } from './repositories/approval.repository.js';
 export type { ApprovalRecord } from './repositories/approval.repository.js';
 export { AuditLogRepository } from './repositories/audit-log.repository.js';
 export type { AuditLogRecord } from './repositories/audit-log.repository.js';
+export { WorkflowRepository, WorkflowExecutionRepository } from './repositories/workflow.repository.js';
+export type { Workflow, WorkflowExecution } from './repositories/workflow.repository.js';
 
 // Migrations
 export { migrations } from './migrations/index.js';

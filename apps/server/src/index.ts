@@ -678,7 +678,7 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
     optimizationEngine = new OptimizationEngine(database, costAnalyzer, server.log);
 
     // Agent management service (CRUD + AI generation).
-    agentService = new AgentService(database, server.log as any);
+    agentService = new AgentService(database, server.log as any, modelRuntime!);
     debugManager = new DebugSessionManager();
     server.log.info('Agent management service initialized');
 

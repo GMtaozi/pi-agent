@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Save, Play, Edit3, ChevronRight, Bot, Wand2 } from 'lucide-react';
+import { Sparkles, Save, Play, Edit3, ChevronRight, Bot, Wand2, Loader2 } from 'lucide-react';
 import { generateAgent, updateAgent, type AgentConfig } from '../lib/api';
 
 const TEMPLATES = [
@@ -14,6 +14,7 @@ const TEMPLATES = [
 export default function AgentCreatePage() {
   const [description, setDescription] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [streamText, setStreamText] = useState('');
   const [generated, setGenerated] = useState<AgentConfig | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -24,18 +25,74 @@ export default function AgentCreatePage() {
     textareaRef.current?.focus();
   }, []);
 
+  // SSE streaming generation
   const handleGenerate = async () => {
     if (!description.trim()) return;
     setGenerating(true);
     setError(null);
     setGenerated(null);
+    setStreamText('');
 
     try {
-      const agent = await generateAgent(description.trim());
-      setGenerated(agent);
-      setEditing(true);
+      const url = `/api/agents/stream?description=${encodeURIComponent(description.trim())}`;
+      const response = await fetch(url, {
+        headers: { Accept: 'text/event-stream' },
+      });
+
+      if (!response.ok) throw new Error('生成失败');
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const event = JSON.parse(line.slice(6));
+              if (event.type === 'token') {
+                setStreamText(prev => prev + event.data.text);
+              } else if (event.type === 'config') {
+                const config = event.data;
+                setGenerated({
+                  id: '',
+                  name: config.name,
+                  description: config.description,
+                  systemPrompt: config.systemPrompt,
+                  model: config.model,
+                  provider: config.provider,
+                  temperature: config.temperature,
+                  maxTokens: config.maxTokens,
+                  tools: JSON.stringify(config.tools),
+                  icon: config.icon,
+                  status: 'draft',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                });
+                setEditing(true);
+              } else if (event.type === 'status') {
+                setStreamText(prev => prev + `\n[${event.data.message}]\n`);
+              }
+            } catch {}
+          }
+        }
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '生成失败，请重试');
+      // Fallback to non-streaming
+      try {
+        const agent = await generateAgent(description.trim());
+        setGenerated(agent);
+        setEditing(true);
+      } catch (fallbackErr) {
+        setError(fallbackErr instanceof Error ? fallbackErr.message : '生成失败，请重试');
+      }
     } finally {
       setGenerating(false);
     }
@@ -110,7 +167,7 @@ export default function AgentCreatePage() {
         >
           {generating ? (
             <>
-              <span className="spin" /> 正在生成...
+              <Loader2 size={18} className="spin" /> {streamText ? '正在生成...' : '连接中...'}
             </>
           ) : (
             <>
@@ -118,6 +175,12 @@ export default function AgentCreatePage() {
             </>
           )}
         </button>
+
+        {generating && streamText && (
+          <div className="stream-output">
+            <pre>{streamText}</pre>
+          </div>
+        )}
       </div>
 
       {error && <div className="error-banner">{error}</div>}

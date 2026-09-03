@@ -1,8 +1,9 @@
 import { authedFetch, apiFetch } from '../lib/api';
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
-import { ArrowDown, X, ArrowUp, Monitor, FileText, Folder, ChevronRight, FileCode, Search, BookOpen, FlaskConical, Menu, ThumbsUp, ThumbsDown, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowDown, X, ArrowUp, Monitor, FileText, Folder, ChevronRight, FileCode, Search, BookOpen, FlaskConical, Menu, ThumbsUp, ThumbsDown, CheckCircle, XCircle, AlertCircle, Bug } from 'lucide-react';
 import ErrorBanner from '../components/ErrorBanner';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import DebugPanel from '../components/DebugPanel';
 import { getFriendlyMessage, AppError } from '../lib/errors';
 import { useWorkspace } from '../contexts/WorkspaceContext';
 import { API_PREFIX, submitFeedback, submitCodeFeedback } from '../lib/api';
@@ -231,6 +232,8 @@ export default function ChatPage({ onToggleSidebar }: { onToggleSidebar?: () => 
   const [dirPickerPath, setDirPickerPath] = useState<string>('');
   const [dirPickerEntries, setDirPickerEntries] = useState<Array<{ name: string; path: string; isDirectory: boolean }>>([]);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [debugSessionId, setDebugSessionId] = useState<string | null>(null);
   const [_models, setModels] = useState<Array<{ id: string; name: string; provider: string; providerName: string; contextLength?: number; supportsReasoning?: boolean; supportsVision?: boolean; input?: string[] }>>([]);
   const [sessionStats, setSessionStats] = useState({ turns: 0, steps: 0, llmMs: 0, toolMs: 0, ttftMs: 0, outputTokens: 0, inputTokens: 0, cacheHit: null as number | null, currentTokPerSec: 0 as number });
   const sessionStatsRef = useRef(sessionStats);
@@ -1203,6 +1206,13 @@ export default function ChatPage({ onToggleSidebar }: { onToggleSidebar?: () => 
           </div>
         </div>
         <div className="actions">
+          <button
+            className={`icon-btn ${showDebugPanel ? 'active' : ''}`}
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+            title="调试器"
+          >
+            <Bug size={18} />
+          </button>
           <Monitor size={18} />
           <FileText size={18} />
         </div>
@@ -1210,70 +1220,78 @@ export default function ChatPage({ onToggleSidebar }: { onToggleSidebar?: () => 
 
       {sessionId ? (
         /* Active Chat */
-        <>
-          <div className="chat-messages" ref={messagesContainerRef} onScroll={() => {
-            if (messagesContainerRef.current) {
-              const container = messagesContainerRef.current;
-              const threshold = 120;
-              isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
-            }
-          }}>
-            <div className="messages-list">
-              {messages.map((m, _i) => (
-                <MessageItem
-                  key={m.id}
-                  role={m.role}
-                  content={m.content}
-                  streaming={m.streaming}
-                  timestamp={m.timestamp}
-                  contentBlocks={m.contentBlocks}
-                  messageId={m.id}
-                  sessionId={sessionId || undefined}
-                  onQuickFeedback={async (msgId, rating) => {
-                    if (!sessionId) return;
-                    try {
-                      await submitFeedback(sessionId, msgId, rating);
-                    } catch (e) {
-                      console.error('Failed to submit feedback', e);
-                    }
-                  }}
-                  onCodeFeedback={async (msgId, rating) => {
-                    if (!sessionId) return;
-                    try {
-                      await submitCodeFeedback(sessionId, msgId, rating);
-                    } catch (e) {
-                      console.error('Failed to submit code feedback', e);
-                    }
-                  }}
-                />
-              ))}
-              <div ref={bottomRef} />
+        <div className="chat-body">
+          <div className={`chat-main ${showDebugPanel ? 'with-debug' : ''}`}>
+            <div className="chat-messages" ref={messagesContainerRef} onScroll={() => {
+              if (messagesContainerRef.current) {
+                const container = messagesContainerRef.current;
+                const threshold = 120;
+                isNearBottomRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+              }
+            }}>
+              <div className="messages-list">
+                {messages.map((m, _i) => (
+                  <MessageItem
+                    key={m.id}
+                    role={m.role}
+                    content={m.content}
+                    streaming={m.streaming}
+                    timestamp={m.timestamp}
+                    contentBlocks={m.contentBlocks}
+                    messageId={m.id}
+                    sessionId={sessionId || undefined}
+                    onQuickFeedback={async (msgId, rating) => {
+                      if (!sessionId) return;
+                      try {
+                        await submitFeedback(sessionId, msgId, rating);
+                      } catch (e) {
+                        console.error('Failed to submit feedback', e);
+                      }
+                    }}
+                    onCodeFeedback={async (msgId, rating) => {
+                      if (!sessionId) return;
+                      try {
+                        await submitCodeFeedback(sessionId, msgId, rating);
+                      } catch (e) {
+                        console.error('Failed to submit code feedback', e);
+                      }
+                    }}
+                  />
+                ))}
+                <div ref={bottomRef} />
+              </div>
+              {!isNearBottomRef.current && messages.length > 0 && (
+                <button className="scroll-to-bottom" onClick={() => {
+                  bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  isNearBottomRef.current = true;
+                }}>
+                  <ArrowDown size={16} style={{ marginRight: 6 }} /> 新消息
+                </button>
+              )}
             </div>
-            {!isNearBottomRef.current && messages.length > 0 && (
-              <button className="scroll-to-bottom" onClick={() => {
-                bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-                isNearBottomRef.current = true;
-              }}>
-                <ArrowDown size={16} style={{ marginRight: 6 }} /> 新消息
-              </button>
+
+            {(loading || sessionStats.turns > 0 || sessionStats.outputTokens > 0 || sse.isConnected) && (
+              <div className="session-stats-bar">
+                <span className="connection-status" title={sse.error || (sse.isConnected ? '已连接' : '连接中...')}>
+                  <span className={`status-dot ${sse.isConnected ? 'connected' : sse.isConnecting ? 'connecting' : 'disconnected'}`} />
+                  {sse.isConnected ? '已连接' : sse.isConnecting ? '连接中...' : '未连接'}
+                </span>
+                <span>{sessionStats.turns} 轮 · {sessionStats.steps} 步</span>
+                <span>首 token {formatMs(sessionStats.ttftMs)}</span>
+                <span>{sessionStats.currentTokPerSec > 0 ? sessionStats.currentTokPerSec.toFixed(1) : '--'} tok/s</span>
+                <span>LLM {formatMs(sessionStats.llmMs)} · 工具 {formatMs(sessionStats.toolMs)}</span>
+                <span>输入 {formatTokens(sessionStats.inputTokens)} tok · 输出 {formatTokens(sessionStats.outputTokens)} tok</span>
+              </div>
             )}
           </div>
 
-          {(loading || sessionStats.turns > 0 || sessionStats.outputTokens > 0 || sse.isConnected) && (
-            <div className="session-stats-bar">
-              <span className="connection-status" title={sse.error || (sse.isConnected ? '已连接' : '连接中...')}>
-                <span className={`status-dot ${sse.isConnected ? 'connected' : sse.isConnecting ? 'connecting' : 'disconnected'}`} />
-                {sse.isConnected ? '已连接' : sse.isConnecting ? '连接中...' : '未连接'}
-              </span>
-              <span>{sessionStats.turns} 轮 · {sessionStats.steps} 步</span>
-              <span>首 token {formatMs(sessionStats.ttftMs)}</span>
-              <span>{sessionStats.currentTokPerSec > 0 ? sessionStats.currentTokPerSec.toFixed(1) : '--'} tok/s</span>
-              <span>LLM {formatMs(sessionStats.llmMs)} · 工具 {formatMs(sessionStats.toolMs)}</span>
-              <span>输入 {formatTokens(sessionStats.inputTokens)} tok · 输出 {formatTokens(sessionStats.outputTokens)} tok</span>
+          {/* Debug Panel */}
+          {showDebugPanel && (
+            <div className="debug-sidebar">
+              <DebugPanel sessionId={sessionId} />
             </div>
           )}
-
-        </>
+        </div>
       ) : (
         /* Welcome / New Session Screen - Mockup Style */
         <div className="welcome-screen">
@@ -1413,6 +1431,12 @@ export default function ChatPage({ onToggleSidebar }: { onToggleSidebar?: () => 
                 <button className="btn btn-primary" onClick={selectCurrentDir} disabled={!dirPickerPath}>选择此目录</button>
               </div>
             </div>
+          </div>
+        )}
+        {/* Debug Panel */}
+        {showDebugPanel && sessionId && (
+          <div className="debug-sidebar">
+            <DebugPanel sessionId={sessionId} />
           </div>
         )}
       </main>
