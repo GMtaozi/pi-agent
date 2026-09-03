@@ -183,7 +183,7 @@ export class PostgresDatabase {
       await client.query('COMMIT');
       return result;
     } catch (error) {
-      try { await client.query('ROLLBACK'); } catch {}
+      try { await client.query('ROLLBACK'); } catch { /* rollback failure is non-fatal */ }
       throw error;
     } finally {
       client.release();

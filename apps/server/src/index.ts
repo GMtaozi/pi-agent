@@ -274,7 +274,9 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
             authenticated = true;
           }
         }
-      } catch {}
+      } catch (err) {
+        logger.warn('JWT verification failed, falling back to session token');
+      }
 
       // Fall back to legacy session token
       if (!authenticated) {
@@ -572,7 +574,9 @@ export async function createServer(options: ServerOptions = {}): Promise<ServerR
           return { authenticated: true, tenantId: jwtPayload.tenantId, sub: jwtPayload.sub, email: jwtPayload.email };
         }
       }
-    } catch {}
+    } catch {
+      // Expected: token may be a legacy session token, not JWT
+    }
 
     // Fall back to legacy session token
     const session = verifySessionToken(token);
@@ -944,13 +948,17 @@ const start = async (): Promise<void> => {
     process.on('unhandledRejection', (reason) => {
         const msg = reason instanceof Error ? reason.stack : String(reason);
         logger.error({ reason: msg }, 'Unhandled Rejection');
-        try { fs.writeFileSync('crash.log', msg || 'unknown unhandled rejection'); } catch {}
+        try { fs.writeFileSync('crash.log', msg || 'unknown unhandled rejection'); } catch (err) {
+          logger.error({ err }, 'Failed to write crash.log');
+        }
     });
     
     process.on('uncaughtException', (error) => {
         const msg = error instanceof Error ? error.stack : String(error);
         logger.error({ error: msg }, 'Uncaught Exception');
-        try { fs.writeFileSync('crash.log', msg || 'unknown uncaught exception'); } catch {}
+        try { fs.writeFileSync('crash.log', msg || 'unknown uncaught exception'); } catch (err) {
+          logger.error({ err }, 'Failed to write crash.log');
+        }
     });
     
     try {

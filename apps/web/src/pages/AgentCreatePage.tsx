@@ -80,7 +80,9 @@ export default function AgentCreatePage() {
               } else if (event.type === 'status') {
                 setStreamText(prev => prev + `\n[${event.data.message}]\n`);
               }
-            } catch {}
+            } catch (err) {
+              console.error('Failed to load agent:', err);
+            }
           }
         }
       }

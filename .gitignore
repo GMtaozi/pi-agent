@@ -1,3 +1,6 @@
+# Temp files
+_tmp_*
+
 # Dependencies
 node_modules
 .pnpm-store

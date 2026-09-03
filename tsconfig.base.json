@@ -16,7 +16,7 @@
     "sourceMap": true,
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
-    "useDefineForClassFields": false,
+    "useDefineForClassFields": true,
     "baseUrl": ".",
     "paths": {
       "@workforge/agent-engine": [

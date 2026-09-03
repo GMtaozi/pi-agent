@@ -291,7 +291,9 @@ export default function WorkflowEditorPage() {
         },
       };
       setNodes((nds) => [...nds, newNode]);
-    } catch {}
+    } catch (err) {
+      console.error('Failed to save workflow:', err);
+    }
   }, [screenToFlowPosition]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {

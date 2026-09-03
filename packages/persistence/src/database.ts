@@ -129,7 +129,7 @@ export class SqliteDatabase {
       this.sqlite.exec('COMMIT');
       return result;
     } catch (error) {
-      try { this.sqlite.exec('ROLLBACK'); } catch {}
+      try { this.sqlite.exec('ROLLBACK'); } catch { /* rollback failure is non-fatal */ }
       throw error;
     }
   }

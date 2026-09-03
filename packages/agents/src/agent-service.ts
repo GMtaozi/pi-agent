@@ -122,7 +122,8 @@ export class AgentService {
     const params: any[] = [];
     for (const [key, value] of Object.entries(updates)) {
       if (value === undefined) continue;
-      const col = this.camelToSnake(key);
+      // agents 表使用驼峰列名（见 migration v22），直接映射
+      const col = AgentService.COLUMN_MAP[key as keyof typeof AgentService.COLUMN_MAP] ?? key;
       sets.push(`${col} = ?`);
       params.push(typeof value === 'object' ? JSON.stringify(value) : value);
     }
@@ -133,6 +134,12 @@ export class AgentService {
     await this.db.query('agents', `UPDATE agents SET ${sets.join(', ')} WHERE id = ?`, params);
     return this.getAgent(id);
   }
+
+  private static readonly COLUMN_MAP: Record<string, string> = {
+    systemPrompt: 'systemPrompt',
+    maxTokens: 'maxTokens',
+    knowledgeBaseIds: 'knowledgeBaseIds',
+  };
 
   async deleteAgent(id: string): Promise<boolean> {
     const result: QueryResult = await this.db.query('agents', 'DELETE FROM agents WHERE id = ?', [id]);
@@ -159,10 +166,6 @@ export class AgentService {
       updatedAt: row.updatedAt ?? row.updated_at,
       metadata: row.metadata,
     };
-  }
-
-  private camelToSnake(str: string): string {
-    return str.replace(/[A-Z]/g, l => `_${l.toLowerCase()}`);
   }
 
   private generateId(): string {
