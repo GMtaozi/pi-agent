@@ -32,11 +32,5 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "**/__tests__/**"
-  ],
-  "references": [
-    {
-      "path": "../logging/tsconfig.build.json"
-    }
-  ],
-  "composite": true
+  ]
 }

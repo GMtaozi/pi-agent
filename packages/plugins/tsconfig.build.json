@@ -28,14 +28,5 @@
     "dist",
     "**/*.test.ts",
     "**/*.spec.ts"
-  ],
-  "references": [
-    {
-      "path": "../sandbox/tsconfig.build.json"
-    },
-    {
-      "path": "../persistence/tsconfig.build.json"
-    }
-  ],
-  "composite": true
+  ]
 }

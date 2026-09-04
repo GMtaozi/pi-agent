@@ -29,6 +29,5 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "**/__tests__/**"
-  ],
-  "composite": true
+  ]
 }

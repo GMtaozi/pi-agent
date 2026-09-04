@@ -15,6 +15,5 @@
     "dist",
     "**/*.test.ts",
     "**/*.spec.ts"
-  ],
-  "composite": true
+  ]
 }
