@@ -3,7 +3,9 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -18,10 +20,22 @@
     "noImplicitAny": false,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
   "references": [
-    { "path": "../sandbox/tsconfig.build.json" },
-    { "path": "../persistence/tsconfig.build.json" }
-  ]
+    {
+      "path": "../sandbox/tsconfig.build.json"
+    },
+    {
+      "path": "../persistence/tsconfig.build.json"
+    }
+  ],
+  "composite": true
 }

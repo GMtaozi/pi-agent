@@ -3,7 +3,11 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -18,10 +22,24 @@
     "noEmit": false,
     "noImplicitAny": false
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.d.ts",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**"
+  ],
   "references": [
-    { "path": "../tools/tsconfig.build.json" },
-    { "path": "../logging/tsconfig.build.json" }
-  ]
+    {
+      "path": "../tools/tsconfig.build.json"
+    },
+    {
+      "path": "../logging/tsconfig.build.json"
+    }
+  ],
+  "composite": true
 }
