@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 对话调试</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .msg-bubble { max-width: 78%; }
+    .stream-caret { display:inline-block;width:7px;height:14px;background:var(--brand);margin-left:2px;animation:blink 1s steps(2) infinite;vertical-align:middle }
+    @keyframes blink { 50%{opacity:0} }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('新建会话')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>新建会话</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/><circle cx="18.5" cy="7" r="2.2"/><path d="M20 13a4 4 0 010 8"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="workflow.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 013 3v6"/></svg><span>工作流编排</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span><span class="badge badge-brand nav-badge">3</span></a>
+        <div class="nav-section-label">对话</div>
+        <a class="nav-item active" data-nav href="chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg><span>对话调试</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.3.1</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="flex items-center gap-2" style="min-width:0">
+          <div class="agent-ico" style="width:32px;height:32px;font-size:13px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div>
+          <div style="min-width:0"><div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">客服助手 Copilot</div><div class="secondary" style="font-size:11px">GPT-4o · 3 个工具已接入</div></div>
+        </div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('已清空上下文')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>清空</button>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('debugPanel').classList.toggle('hidden')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>调试面板</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <button class="icon-btn" onclick="piToast('暂无新通知')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="dot"></span></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <div class="flex" style="flex:1;min-height:0">
+        <!-- Conversation history -->
+        <aside class="sidebar" style="width:240px;border-right:1px solid var(--border-color);border-left:none;background:var(--bg-secondary);overflow-y:auto">
+          <div class="sidebar-section-label">历史会话</div>
+          <div class="nav-scroll" style="margin:0">
+            <div class="session-row active" style="border-radius:var(--radius-md)"><div class="session-row-info"><div class="session-row-title">订单退款咨询</div><div class="session-row-time">刚刚 · 12 条</div></div></div>
+            <div class="session-row" style="border-radius:var(--radius-md)"><div class="session-row-info"><div class="session-row-title">物流状态查询</div><div class="session-row-time">今天 14:20 · 8 条</div></div></div>
+            <div class="session-row" style="border-radius:var(--radius-md)"><div class="session-row-info"><div class="session-row-title">发票申请流程</div><div class="session-row-time">昨天 · 5 条</div></div></div>
+            <div class="session-row" style="border-radius:var(--radius-md)"><div class="session-row-info"><div class="session-row-title">会员权益说明</div><div class="session-row-time">3 天前 · 21 条</div></div></div>
+          </div>
+        </aside>
+
+        <!-- Chat area -->
+        <main class="flex-1 flex flex-col min-w-0" style="background:var(--bg-primary)">
+          <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+            <div class="flex gap-2 flex-row-reverse"><div class="agent-ico" style="width:30px;height:30px;font-size:12px;background:var(--bg-tertiary)">我</div><div class="msg-bubble p-3 rounded-xl" style="background:var(--brand);color:#fff;font-size:14px">我的订单 #88231 到现在还没发货，能帮我查一下吗？</div></div>
+            <div class="flex gap-3">
+              <div class="agent-ico" style="width:30px;height:30px;font-size:12px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div>
+              <div class="msg-bubble">
+                <div class="p-3 rounded-xl" style="background:var(--bg-secondary);border:1px solid var(--border-color);font-size:14px;line-height:1.7">
+                  好的，正在为您查询订单 <b>#88231</b> 的物流状态，请稍候…
+                  <div class="flex gap-1 mt-2"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>
+                </div>
+                <div class="flex gap-2 mt-2" style="font-size:11px"><span class="badge badge-info">调用工具 · 订单查询</span><span class="secondary">tokens 412</span></div>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="agent-ico" style="width:30px;height:30px;font-size:12px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div>
+              <div class="msg-bubble">
+                <div class="p-3 rounded-xl" style="background:var(--bg-secondary);border:1px solid var(--border-color);font-size:14px;line-height:1.7">
+                  您好！经查询，您的订单 <b>#88231</b> 已于今天上午 10:24 由<b>顺丰速运</b>揽收，当前在<b>杭州转运中心</b>，预计明天 18:00 前送达。
+                  <br/><br/>如需加速，我可以为您申请<b>优先派送</b>或发起<b>退款</b>，请问需要哪种处理呢？<span class="stream-caret"></span>
+                </div>
+                <div class="flex gap-2 mt-2" style="font-size:11px"><span class="badge badge-success">检索命中 · 物流FAQ</span><span class="secondary">耗时 1.4s · 1,038 tokens</span><button class="icon-btn btn-xs" style="width:24px;height:24px" onclick="piToast('已复制')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+              </div>
+            </div>
+          </div>
+          <div class="p-4" style="border-top:1px solid var(--border-color)">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="segmented" data-seg-group><button class="seg-btn active" data-seg>对话</button><button class="seg-btn" data-seg>Agent</button><button class="seg-btn" data-seg>工作流</button></div>
+              <div class="header-spacer"></div>
+              <button class="icon-btn btn-sm" title="附件" onclick="piToast('添加附件')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15l-9 9-7-7a5 5 0 017-7l9 9a3 3 0 01-4 4l-9-9"/></svg></button>
+              <button class="icon-btn btn-sm" title="知识库" onclick="piToast('引用知识库')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></button>
+            </div>
+            <div class="flex items-end gap-2 p-2 rounded-xl" style="border:1px solid var(--border-color);background:var(--bg-input)">
+              <textarea class="textarea" rows="1" style="border:none;background:transparent;padding:8px" placeholder="输入消息，Enter 发送，Shift+Enter 换行…"></textarea>
+              <button class="btn btn-primary btn-icon" onclick="piToast('消息已发送（流式输出演示）')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+            </div>
+          </div>
+        </main>
+
+        <!-- Debug panel -->
+        <aside id="debugPanel" class="sidebar hidden" style="width:340px;border-left:1px solid var(--border-color);border-right:none;background:var(--bg-secondary);overflow-y:auto">
+          <div class="card-head" style="padding:16px 12px 8px"><div class="card-title" style="font-size:14px">运行调试 · Trace</div><span class="badge badge-success">成功</span></div>
+          <div class="px-3 flex flex-col gap-3" style="font-size:13px">
+            <div class="p-3 rounded-lg" style="border:1px solid var(--border-color);background:var(--bg-canvas)">
+              <div class="flex items-center justify-between"><span class="badge badge-cyan">① 意图识别</span><span class="secondary" style="font-size:11px">0.3s</span></div>
+              <div class="secondary mt-2" style="font-size:12px">识别为「物流查询」· 置信度 0.97</div>
+            </div>
+            <div class="p-3 rounded-lg" style="border:1px solid var(--border-color);background:var(--bg-canvas)">
+              <div class="flex items-center justify-between"><span class="badge badge-info">② 工具调用</span><span class="secondary" style="font-size:11px">0.6s</span></div>
+              <div class="mono mt-2" style="font-size:11px;color:var(--text-secondary);background:var(--bg-input);padding:8px;border-radius:8px;overflow-x:auto">queryOrder({"orderId":"#88231"}) → {"status":"运输中"}</div>
+            </div>
+            <div class="p-3 rounded-lg" style="border:1px solid var(--border-color);background:var(--bg-canvas)">
+              <div class="flex items-center justify-between"><span class="badge badge-brand">③ 知识检索</span><span class="secondary" style="font-size:11px">0.2s</span></div>
+              <div class="secondary mt-2" style="font-size:12px">命中 2 段 · 物流FAQ / 时效说明</div>
+              <div class="progress mt-2"><span style="width:82%"></span></div>
+            </div>
+            <div class="p-3 rounded-lg" style="border:1px solid var(--border-color);background:var(--bg-canvas)">
+              <div class="flex items-center justify-between"><span class="badge badge-success">④ 生成回复</span><span class="secondary" style="font-size:11px">1.4s</span></div>
+              <div class="mono mt-2 grid grid-cols-2 gap-2" style="font-size:11px">
+                <div class="secondary">Prompt tokens<br><b style="color:var(--tp)">1,038</b></div>
+                <div class="secondary">Completion<br><b style="color:var(--tp)">256</b></div>
+                <div class="secondary">总耗时<br><b style="color:var(--tp)">2.5s</b></div>
+                <div class="secondary">成本<br><b style="color:var(--tp)">¥0.02</b></div>
+              </div>
+            </div>
+            <button class="btn btn-secondary btn-sm w-full" onclick="piToast('已导出 Trace JSON')">导出 Trace</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+  <style>@media(max-width:1024px){ .hidden{display:none!important} }</style>
+</body>
+</html>

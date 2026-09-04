@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 审计日志</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .cat-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;line-height:1.7;font-family:var(--font-mono)}
+    .cat-auth{background:rgba(139,92,246,.15);color:#a78bfa}
+    .cat-resource{background:rgba(6,182,212,.15);color:#22d3ee}
+    .cat-execution{background:rgba(129,201,149,.15);color:#81c995}
+    .cat-billing{background:rgba(251,191,36,.15);color:#fbbf24}
+    .cat-data{background:rgba(244,114,182,.15);color:#f472b6}
+    .log-row{display:grid;grid-template-columns:132px 88px minmax(180px,1.6fr) minmax(140px,1.2fr) 74px 60px;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border-light);font-size:12.5px;cursor:pointer;transition:var(--transition-fast)}
+    .log-row:hover{background:var(--bg-hover)}
+    .log-head{display:grid;grid-template-columns:132px 88px minmax(180px,1.6fr) minmax(140px,1.2fr) 74px 60px;gap:12px;padding:9px 16px;font-size:11.5px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border-strong)}
+    .mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+    .res-tag{font-family:var(--font-mono);font-size:11px;padding:1px 6px;border-radius:4px;background:var(--bg-tertiary);color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;max-width:100%}
+    .chain-strip{display:flex;align-items:center;gap:3px;margin-top:10px;flex-wrap:wrap}
+    .chain-cell{width:9px;height:22px;border-radius:2px;background:var(--success-color);opacity:.75}
+    .chain-cell.bad{background:var(--error-color);opacity:1;box-shadow:0 0 0 2px rgba(242,139,130,.25)}
+    .hash-chip{font-family:var(--font-mono);font-size:10.5px;color:var(--text-tertiary);background:var(--bg-input);border:1px solid var(--border-color);border-radius:4px;padding:2px 7px;display:inline-block;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .detail-panel{position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:var(--bg-secondary);border-left:1px solid var(--border-strong);z-index:60;transform:translateX(100%);transition:transform var(--transition-slow);overflow-y:auto}
+    .detail-panel.open{transform:translateX(0)}
+    .detail-scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55;opacity:0;pointer-events:none;transition:var(--transition-normal)}
+    .detail-scrim.open{opacity:1;pointer-events:auto}
+    .kv{display:grid;grid-template-columns:96px 1fr;gap:8px;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--border-light);align-items:start}
+    .kv>span:first-child{color:var(--text-tertiary)}
+    .code-block{font-family:var(--font-mono);font-size:11.5px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:10px 12px;overflow-x:auto;line-height:1.7;color:var(--text-secondary);white-space:pre}
+    @media(max-width:1000px){.log-row,.log-head{grid-template-columns:110px 80px 1fr 70px}.log-row>*:nth-child(4),.log-head>*:nth-child(4){display:none}.log-row>*:nth-child(6),.log-head>*:nth-child(6){display:none}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('打开合规报告向导')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg><span>生成合规报告</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span><span class="badge badge-error nav-badge">3</span></a>
+        <a class="nav-item active" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.6.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="检索审计：操作者、资源、IP、requestId…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('正在校验哈希链…')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>校验完整性</button>
+        <button class="btn btn-primary btn-sm" onclick="piToast('打开导出向导（导出操作需审计 + 双签审批）')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>导出</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>治理与合规</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>审计日志</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">审计日志</h1>
+            <p class="page-subtitle">全量操作留痕 · 哈希链防篡改 · 合规报告导出</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-success">链完整</span>
+            <span class="badge badge-gray">留存 7 年</span>
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="card"><div class="secondary" style="font-size:12px">累计审计记录</div><div style="font-size:26px;font-weight:700;margin-top:4px">1.28M</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">本月 +84,201</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">覆盖率</div><div style="font-size:26px;font-weight:700;margin-top:4px">100%</div><span class="badge badge-success" style="display:inline-block;margin-top:4px">端点全埋点</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">哈希链校验</div><div style="font-size:26px;font-weight:700;margin-top:4px;color:var(--success-color)">通过</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">昨日 03:00 校验</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">持久化存活率</div><div style="font-size:26px;font-weight:700;margin-top:4px">100%</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">重启回归通过</span></div>
+        </div>
+
+        <!-- 哈希链完整性 -->
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:240px">
+              <div style="font-size:13.5px;font-weight:600">哈希链完整性</div>
+              <div class="secondary" style="font-size:12px;margin-top:4px;line-height:1.6">每条记录含 <code class="mono">prev_hash</code> 与自身 <code class="mono">hash = SHA256(prev_hash ‖ canonical_json)</code>，任何历史篡改都会导致链断裂。每格代表 10,000 条记录。</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--success-color);font-weight:600">✓ 128 段全部通过</div>
+              <div class="secondary" style="font-size:11.5px;margin-top:2px">seq 无断裂 · 锚点已归档</div>
+            </div>
+          </div>
+          <div class="chain-strip" id="chainStrip"></div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="hash-chip">锚点 2026-09-03: 9f2a…c41e ✓</span>
+            <span class="hash-chip">锚点 2026-09-02: 3b7d…8a02 ✓</span>
+            <span class="hash-chip">锚点 2026-09-01: e51c…7f39 ✓</span>
+            <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="piToast('锚点已归档至只写存储（WORM）')">查看归档</button>
+          </div>
+        </div>
+
+        <!-- 筛选 + 列表 -->
+        <div class="card" style="padding:0;overflow:hidden;margin-top:4px">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <select class="input" style="height:30px;font-size:12px;padding:0 8px;min-width:132px"><option>近 24 小时</option><option>近 7 天</option><option>近 90 天</option><option>自定义…</option></select>
+            <select class="input" style="height:30px;font-size:12px;padding:0 8px;min-width:118px"><option>全部类别</option><option>auth 认证授权</option><option>resource 资源操作</option><option>execution 执行</option><option>billing 计费</option><option>data 数据</option></select>
+            <select class="input" style="height:30px;font-size:12px;padding:0 8px;min-width:112px"><option>全部操作者</option><option>林知遥</option><option>陈牧</option><option>苏黎</option><option>何夕</option><option>郑砚</option></select>
+            <select class="input" style="height:30px;font-size:12px;padding:0 8px;min-width:104px"><option>全部结果</option><option>success</option><option>failure</option><option>denied 越权拦截</option></select>
+            <input class="input" style="height:30px;font-size:12px;min-width:150px" placeholder="resource_id / requestId" />
+            <button class="btn btn-secondary btn-sm" onclick="piToast('应用筛选（P95 &lt; 1s）')">筛选</button>
+          </div>
+
+          <div class="log-head">
+            <div>时间</div><div>类别</div><div>操作 / 资源</div><div>操作者</div><div>结果</div><div>IP</div>
+          </div>
+
+          <div class="log-row" onclick="openDetail()">
+            <div class="mono">09-03 14:18:22</div>
+            <div><span class="cat-pill cat-resource">resource</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">删除知识库</div><span class="res-tag">knowledge_base / kb_prod_finance</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">苏黎</div><div class="mono">developer · 工程部</div></div>
+            <div><span class="badge badge-error">denied</span></div>
+            <div class="mono">10.2.×</div>
+          </div>
+
+          <div class="log-row" onclick="openDetail()">
+            <div class="mono">09-03 14:15:07</div>
+            <div><span class="cat-pill cat-auth">auth</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">权限变更：授予 auditor 角色</div><span class="res-tag">user_roles / usr_zhengyan</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">林知遥</div><div class="mono">owner · 全租户</div></div>
+            <div><span class="badge badge-success">success</span></div>
+            <div class="mono">10.2.×</div>
+          </div>
+
+          <div class="log-row" onclick="openDetail()">
+            <div class="mono">09-03 14:02:51</div>
+            <div><span class="cat-pill cat-execution">execution</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">Agent 执行 · 工具调用 bash</div><span class="res-tag">agent / 运维助手 v1.3</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">何夕</div><div class="mono">operator · 工程部</div></div>
+            <div><span class="badge badge-warning">pending</span></div>
+            <div class="mono">10.2.×</div>
+          </div>
+
+          <div class="log-row" onclick="openDetail()">
+            <div class="mono">09-03 13:47:33</div>
+            <div><span class="cat-pill cat-data">data</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">审计日志导出（近 90 天）</div><span class="res-tag">audit_logs / export</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">郑砚</div><div class="mono">auditor · 合规审计</div></div>
+            <div><span class="badge badge-error">denied</span></div>
+            <div class="mono">10.2.×</div>
+          </div>
+
+          <div class="log-row" onclick="openDetail()">
+            <div class="mono">09-03 13:20:14</div>
+            <div><span class="cat-pill cat-billing">billing</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">配额策略变更：月度成本上限 ¥8,000 → ¥12,000</div><span class="res-tag">quota_policies / cost.monthly</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">林知遥</div><div class="mono">owner · 全租户</div></div>
+            <div><span class="badge badge-success">success</span></div>
+            <div class="mono">10.2.×</div>
+          </div>
+
+          <div class="log-row" onclick="openDetail()">
+            <div class="mono">09-03 12:41:09</div>
+            <div><span class="cat-pill cat-resource">resource</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">插件安装：Slack 通知器</div><span class="res-tag">plugin / mcp_slack_notifier</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">苏黎</div><div class="mono">developer · 工程部</div></div>
+            <div><span class="badge badge-success">success</span></div>
+            <div class="mono">10.2.×</div>
+          </div>
+
+          <div class="log-row" onclick="openDetail()">
+            <div class="mono">09-03 11:58:42</div>
+            <div><span class="cat-pill cat-auth">auth</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">登录失败（第 3 次）— 触发临时锁定</div><span class="res-tag">auth / login</span></div>
+            <div style="min-width:0"><div style="font-size:12.5px">未知来源</div><div class="mono">actor_type: system</div></div>
+            <div><span class="badge badge-error">failure</span></div>
+            <div class="mono">203.0.×</div>
+          </div>
+
+          <div style="padding:12px 16px;display:flex;align-items:center;gap:10px">
+            <span class="secondary" style="font-size:12px">显示 7 / 84,201 条（近 24h）</span>
+            <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="piToast('加载更多')">加载更多</button>
+          </div>
+        </div>
+
+        <!-- 合规报告 -->
+        <div class="card" style="margin-top:4px">
+          <div style="font-size:13.5px;font-weight:600;margin-bottom:4px">合规报告</div>
+          <div class="secondary" style="font-size:12px;margin-bottom:12px">按标准生成合规自评报告，附带哈希链校验结果</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div style="padding:12px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-tertiary)">
+              <div style="font-size:13px;font-weight:600">SOC 2 Type II</div>
+              <div class="secondary" style="font-size:11.5px;margin-top:4px;line-height:1.6">安全 / 可用性 / 保密性 信任服务准则</div>
+              <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px" onclick="piToast('生成 SOC2 报告（含链校验结果）')">生成报告</button>
+            </div>
+            <div style="padding:12px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-tertiary)">
+              <div style="font-size:13px;font-weight:600">ISO/IEC 27001</div>
+              <div class="secondary" style="font-size:11.5px;margin-top:4px;line-height:1.6">信息安全管理体系 · 访问控制与日志</div>
+              <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px" onclick="piToast('生成 ISO27001 报告')">生成报告</button>
+            </div>
+            <div style="padding:12px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-tertiary)">
+              <div style="font-size:13px;font-weight:600">等保 2.0（三级）</div>
+              <div class="secondary" style="font-size:11.5px;margin-top:4px;line-height:1.6">安全审计 · 数据完整性 · 剩余信息保护</div>
+              <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:10px" onclick="piToast('生成等保 2.0 报告')">生成报告</button>
+            </div>
+          </div>
+          <div style="margin-top:12px;padding:10px 12px;border-radius:var(--radius-sm);background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);font-size:12px;color:var(--brand-cyan);line-height:1.6">
+            ℹ 导出操作本身会被审计（<code class="mono">category=data</code>），且需 auditor + admin 双签审批。审计日志属一等敏感资产，访问需 <code class="mono">audit_log:read</code> 权限。
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="detail-scrim" id="detailScrim" onclick="closeDetail()"></div>
+  <aside class="detail-panel" id="detailPanel">
+    <div style="position:sticky;top:0;background:var(--bg-secondary);padding:14px 16px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:10px;z-index:1">
+      <div style="font-size:14px;font-weight:600">审计记录详情</div>
+      <button class="icon-btn" style="margin-left:auto" onclick="closeDetail()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div style="padding:16px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="cat-pill cat-resource">resource</span><span class="badge badge-error">denied</span><span class="badge badge-gray">seq #1,284,113</span>
+      </div>
+
+      <div>
+        <div class="kv"><span>时间</span><span class="mono">2026-09-03 14:18:22.481 +08:00</span></div>
+        <div class="kv"><span>操作</span><span>删除知识库（knowledge_base.delete）</span></div>
+        <div class="kv"><span>资源</span><span class="mono">knowledge_base / kb_prod_finance</span></div>
+        <div class="kv"><span>操作者</span><span>苏黎（developer · 工程部）</span></div>
+        <div class="kv"><span>结果</span><span style="color:var(--error-color)">denied — 越权拦截（scope=team 不匹配）</span></div>
+        <div class="kv"><span>IP / UA</span><span class="mono">10.2.14.77 · Chrome 141 / macOS</span></div>
+        <div class="kv"><span>requestId</span><span class="mono">req-7f3a91c4</span></div>
+        <div class="kv"><span>租户</span><span class="mono">tenant_acme</span></div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--text-tertiary);margin-bottom:8px">哈希链</div>
+        <div class="kv"><span>prev_hash</span><span class="mono" style="word-break:break-all">6c1f9e42a7b3…d08e</span></div>
+        <div class="kv"><span>hash</span><span class="mono" style="word-break:break-all">b4e82a17f9c5…3a61</span></div>
+        <div style="margin-top:8px;font-size:11.5px;color:var(--success-color)">✓ 与 seq #1,284,114 的 prev_hash 一致，链未断裂</div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:600;color:var(--text-tertiary);margin-bottom:8px">details</div>
+        <div class="code-block">{
+  "reason": "scope_mismatch",
+  "required_scope": "tenant",
+  "granted_scope": "team",
+  "policy": "explicit_deny",
+  "evaluated_roles": ["developer"],
+  "departments": ["工程部"],
+  "resource_department": "财务部"
+}</div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-secondary" style="flex:1" onclick="piToast('已复制 requestId，可跳转链路追踪')">复制 requestId</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="piToast('查看该资源的完整审计轨迹')">资源轨迹</button>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const strip = document.getElementById('chainStrip');
+    for (let i = 0; i < 128; i++) {
+      const c = document.createElement('div');
+      c.className = 'chain-cell';
+      c.title = '段 #' + (i + 1) + ' · seq ' + (i * 10000 + 1) + '–' + ((i + 1) * 10000) + ' · 校验通过';
+      strip.appendChild(c);
+    }
+    const panel = document.getElementById('detailPanel'), scrim = document.getElementById('detailScrim');
+    function openDetail(){ panel.classList.add('open'); scrim.classList.add('open'); }
+    function closeDetail(){ panel.classList.remove('open'); scrim.classList.remove('open'); }
+  </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · AI 网关配置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .route-card{border-radius:var(--radius-lg);border:1px solid var(--border-color);background:var(--bg-secondary);overflow:hidden;transition:var(--transition-fast)}
+    .route-card:hover{border-color:var(--border-strong)}
+    .route-row{display:grid;grid-template-columns:40px 1fr 120px 100px 80px 90px 70px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border-light);font-size:12.5px;transition:background var(--transition-fast)}
+    .route-row:hover{background:var(--bg-hover)}
+    .route-row:last-child{border-bottom:none}
+    .route-head{display:grid;grid-template-columns:40px 1fr 120px 100px 80px 90px 70px;gap:12px;padding:9px 16px;font-size:11.5px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border-strong)}
+    .priority-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--font-mono)}
+    .priority-1{background:var(--accent-light);color:var(--brand);border:1px solid rgba(139,92,246,.3)}
+    .priority-2{background:var(--accent-cyan-light);color:var(--accent-cyan);border:1px solid rgba(6,182,212,.3)}
+    .priority-3{background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border-color)}
+    .provider-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border-color)}
+    .switch{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+    .switch input{opacity:0;width:0;height:0}
+    .switch .slider{position:absolute;inset:0;background:var(--bg-active);border:1px solid var(--border-color);border-radius:999px;cursor:pointer;transition:var(--transition-fast)}
+    .switch .slider::before{content:'';position:absolute;height:14px;width:14px;left:3px;top:2px;background:var(--text-secondary);border-radius:50%;transition:var(--transition-fast)}
+    .switch input:checked+.slider{background:var(--brand);border-color:var(--brand)}
+    .switch input:checked+.slider::before{transform:translateX(16px);background:#fff}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    .modal{background:var(--bg-secondary);border:1px solid var(--border-strong);border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-elevated)}
+    .modal-header{padding:16px 20px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}
+    .modal-body{padding:20px}
+    .modal-footer{padding:14px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:8px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .condition-block{padding:12px;border-radius:var(--radius-md);border:1px solid var(--border-color);background:var(--bg-tertiary);margin-bottom:8px}
+    @media(max-width:900px){.route-row,.route-head{grid-template-columns:30px 1fr 80px 70px}.route-row>*:nth-child(3),.route-row>*:nth-child(4),.route-row>*:nth-child(5),.route-head>*:nth-child(3),.route-head>*:nth-child(4),.route-head>*:nth-child(5){display:none}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="openModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>新建路由</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <div class="nav-section-label">可观测性</div>
+        <a class="nav-item" data-nav href="m5-observability-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>可观测性仪表盘</span></a>
+        <a class="nav-item" data-nav href="m5-trace-viewer.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8L7 17M17 7l2.8-2.8"/></svg><span>调用链追踪</span></a>
+        <a class="nav-item" data-nav href="m5-anomaly-list.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.41 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>异常列表</span></a>
+        <a class="nav-item active" data-nav href="m5-gateway-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg><span>AI 网关配置</span></a>
+        <a class="nav-item" data-nav href="m5-gateway-metrics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M12 7v5l3 3"/></svg><span>网关指标</span></a>
+        <a class="nav-item" data-nav href="m5-eval-dataset.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg><span>评测数据集</span></a>
+        <a class="nav-item" data-nav href="m5-eval-run.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg><span>评测执行</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.6.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索路由规则…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('打开 Provider 管理')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg>Provider 管理</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新建路由</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>可观测性</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>AI 网关配置</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">AI 网关配置</h1>
+            <p class="page-subtitle">路由规则管理 · Provider 配置 · 流量分发策略</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-success">5 条规则已启用</span>
+            <span class="badge badge-gray">2 条已禁用</span>
+          </div>
+        </div>
+
+        <!-- 路由规则列表 -->
+        <div class="route-card">
+          <div class="route-head"><div>优先级</div><div>规则名称 / 匹配条件</div><div>目标 Provider</div><div>模型</div><div>命中率</div><div>状态</div><div>操作</div></div>
+
+          <div class="route-row">
+            <div><span class="priority-badge priority-1">1</span></div>
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">高优先级 · 代码生成</div>
+              <div class="secondary" style="font-size:11px">Agent = 代码审查 AND 任务类型 = 代码生成</div>
+            </div>
+            <div><span class="provider-chip">OpenAI</span></div>
+            <div class="mono" style="font-size:11px">gpt-4o</div>
+            <div class="mono" style="color:var(--success-color)">98.2%</div>
+            <div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('删除路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </div>
+
+          <div class="route-row">
+            <div><span class="priority-badge priority-2">2</span></div>
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">客服对话路由</div>
+              <div class="secondary" style="font-size:11px">Agent = 客服助手 AND 消息长度 < 2000</div>
+            </div>
+            <div><span class="provider-chip">Anthropic</span></div>
+            <div class="mono" style="font-size:11px">claude-3.5-sonnet</div>
+            <div class="mono" style="color:var(--success-color)">95.7%</div>
+            <div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('删除路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </div>
+
+          <div class="route-row">
+            <div><span class="priority-badge priority-3">3</span></div>
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">低成本 · 简单查询</div>
+              <div class="secondary" style="font-size:11px">任务类型 = 简单查询 AND 优先级 = 低</div>
+            </div>
+            <div><span class="provider-chip">DeepSeek</span></div>
+            <div class="mono" style="font-size:11px">deepseek-chat</div>
+            <div class="mono" style="color:var(--success-color)">99.1%</div>
+            <div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('删除路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </div>
+
+          <div class="route-row">
+            <div><span class="priority-badge priority-3" style="background:var(--bg-tertiary);color:var(--text-tertiary)">4</span></div>
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">数据分析路由</div>
+              <div class="secondary" style="font-size:11px">Agent = 数据分析 AND 需要推理 = 是</div>
+            </div>
+            <div><span class="provider-chip">OpenAI</span></div>
+            <div class="mono" style="font-size:11px">gpt-4o</div>
+            <div class="mono" style="color:var(--success-color)">96.8%</div>
+            <div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('删除路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </div>
+
+          <div class="route-row">
+            <div><span class="priority-badge priority-3" style="background:var(--bg-tertiary);color:var(--text-tertiary)">5</span></div>
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">文档翻译路由</div>
+              <div class="secondary" style="font-size:11px">Agent = 文档翻译 AND 目标语言 = 中文</div>
+            </div>
+            <div><span class="provider-chip">Anthropic</span></div>
+            <div class="mono" style="font-size:11px">claude-3-opus</div>
+            <div class="mono" style="color:var(--success-color)">94.3%</div>
+            <div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('删除路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </div>
+
+          <div class="route-row" style="opacity:0.5">
+            <div><span class="priority-badge priority-3" style="background:var(--bg-tertiary);color:var(--text-tertiary)">6</span></div>
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">备用 · 知识检索</div>
+              <div class="secondary" style="font-size:11px">Agent = 知识检索 AND 知识库类型 = FAQ</div>
+            </div>
+            <div><span class="provider-chip">DeepSeek</span></div>
+            <div class="mono" style="font-size:11px">deepseek-chat</div>
+            <div class="mono" style="color:var(--text-tertiary)">—</div>
+            <div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('删除路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </div>
+
+          <div class="route-row" style="opacity:0.5">
+            <div><span class="priority-badge priority-3" style="background:var(--bg-tertiary);color:var(--text-tertiary)">7</span></div>
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">实验性 · 多模态</div>
+              <div class="secondary" style="font-size:11px">任务类型 = 图片理解 AND 实验标志 = true</div>
+            </div>
+            <div><span class="provider-chip">OpenAI</span></div>
+            <div class="mono" style="font-size:11px">gpt-4o-vision</div>
+            <div class="mono" style="color:var(--text-tertiary)">—</div>
+            <div><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('删除路由规则')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 新建路由规则 Modal -->
+  <div class="modal-overlay" id="routeModal" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div style="font-size:14px;font-weight:600">新建路由规则</div>
+        <button class="icon-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label">规则名称</label>
+          <input type="text" class="input" placeholder="例如：高优先级 · 代码生成" />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label">优先级</label>
+            <select class="select"><option>1 - 最高</option><option>2</option><option selected>3 - 普通</option><option>4</option><option>5 - 最低</option></select>
+          </div>
+          <div class="field">
+            <label class="field-label">状态</label>
+            <select class="select"><option selected>启用</option><option>禁用</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">匹配条件</label>
+          <div class="condition-block">
+            <div class="form-row">
+              <div class="field" style="margin-bottom:0"><label class="field-label">字段</label><select class="select"><option>Agent</option><option>任务类型</option><option>消息长度</option><option>优先级</option></select></div>
+              <div class="field" style="margin-bottom:0"><label class="field-label">值</label><input type="text" class="input" placeholder="输入匹配值" /></div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="piToast('添加匹配条件')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>添加条件</button>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label">目标 Provider</label>
+            <select class="select"><option>OpenAI</option><option>Anthropic</option><option>DeepSeek</option><option>Google</option></select>
+          </div>
+          <div class="field">
+            <label class="field-label">模型</label>
+            <select class="select"><option>gpt-4o</option><option>gpt-4o-mini</option><option>claude-3.5-sonnet</option><option>claude-3-opus</option><option>deepseek-chat</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">备注</label>
+          <textarea class="textarea" rows="2" placeholder="可选：描述此规则的用途"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="closeModal(); piToast('路由规则已创建')">创建规则</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() { document.getElementById('routeModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('routeModal').style.display = 'none'; }
+    document.getElementById('routeModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>

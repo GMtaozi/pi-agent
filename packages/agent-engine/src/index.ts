@@ -1,0 +1,11 @@
+export { AgentEngine } from './engine.js';
+export type { SessionInfo, AgentEngineOptions } from './engine.js';
+export type { RuntimeConfig } from './engine.js';
+export { ContextBuilder } from './context-builder.js';
+export type { FileContext, WorkspaceContext } from './context-builder.js';
+export { ModelRouter } from './model-router.js';
+export type { ToolRoutingStrategy, ToolContext } from './model-router.js';
+export { ModelSelector } from './model-selector.js';
+export type { ModelSelectorConfig, ModelSelectorStrategy, SelectorContext, ModelCapability } from './model-selector.js';
+export { presetRegistry } from './presets/index.js';
+export type { Preset, PresetRegistry } from './presets/index.js';

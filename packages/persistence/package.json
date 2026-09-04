@@ -1,0 +1,19 @@
+{
+  "name": "@workforge/persistence",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "type": "module"
+}

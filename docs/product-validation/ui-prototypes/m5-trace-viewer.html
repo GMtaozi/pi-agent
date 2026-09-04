@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 调用链追踪器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .trace-container{display:grid;grid-template-columns:1fr 360px;gap:0;height:calc(100vh - 56px - 48px);min-height:500px}
+    .tree-panel{border-right:1px solid var(--border-color);overflow-y:auto;padding:16px}
+    .detail-panel{overflow-y:auto;padding:16px;background:var(--bg-secondary)}
+    .tree-node{position:relative;padding-left:20px}
+    .tree-node::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:1px;background:var(--border-color)}
+    .tree-node:first-child::before{top:14px}
+    .tree-node:last-child::before{bottom:calc(100% - 14px)}
+    .tree-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-md);cursor:pointer;transition:var(--transition-fast);position:relative;font-size:12.5px}
+    .tree-item:hover{background:var(--bg-hover)}
+    .tree-item.active{background:var(--accent-light);border:1px solid var(--brand)}
+    .tree-item::before{content:'';position:absolute;left:-13px;top:50%;width:12px;height:1px;background:var(--border-color)}
+    .tree-toggle{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;border-radius:3px;color:var(--text-tertiary)}
+    .tree-toggle:hover{background:var(--bg-hover);color:var(--text-primary)}
+    .tree-icon{width:18px;height:18px;flex-shrink:0}
+    .tree-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .tree-duration{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+    .timeline-bar{height:6px;border-radius:999px;background:var(--bg-tertiary);position:relative;overflow:hidden;margin:4px 0}
+    .timeline-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand),var(--brand-cyan))}
+    .timeline-fill.warn{background:linear-gradient(90deg,var(--warning-color),#f59e0b)}
+    .timeline-fill.err{background:linear-gradient(90deg,var(--error-color),#dc2626)}
+    .detail-section{margin-bottom:16px}
+    .detail-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-tertiary);margin-bottom:6px}
+    .detail-value{font-size:13px;color:var(--text-primary);line-height:1.6}
+    .detail-code{font-family:var(--font-mono);font-size:11.5px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:10px 12px;white-space:pre-wrap;word-break:break-all;line-height:1.6;color:var(--text-secondary);max-height:160px;overflow-y:auto}
+    .span-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:10.5px;font-weight:600;font-family:var(--font-mono)}
+    .span-tag.llm{background:var(--accent-light);color:var(--brand)}
+    .span-tag.tool{background:var(--accent-cyan-light);color:var(--accent-cyan)}
+    .span-tag.retriever{background:rgba(129,201,149,.15);color:var(--success-color)}
+    .span-tag.agent{background:rgba(253,214,99,.15);color:var(--warning-color)}
+    .time-ruler{display:flex;justify-content:space-between;font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);padding:0 10px;margin-bottom:4px}
+    @media(max-width:900px){.trace-container{grid-template-columns:1fr}.detail-panel{display:none}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('新建追踪查询')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>新建查询</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <div class="nav-section-label">可观测性</div>
+        <a class="nav-item" data-nav href="m5-observability-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>可观测性仪表盘</span></a>
+        <a class="nav-item active" data-nav href="m5-trace-viewer.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8L7 17M17 7l2.8-2.8"/></svg><span>调用链追踪</span></a>
+        <a class="nav-item" data-nav href="m5-anomaly-list.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.41 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>异常列表</span><span class="badge badge-error nav-badge">5</span></a>
+        <a class="nav-item" data-nav href="m5-gateway-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg><span>AI 网关配置</span></a>
+        <a class="nav-item" data-nav href="m5-gateway-metrics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M12 7v5l3 3"/></svg><span>网关指标</span></a>
+        <a class="nav-item" data-nav href="m5-eval-dataset.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg><span>评测数据集</span></a>
+        <a class="nav-item" data-nav href="m5-eval-run.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg><span>评测执行</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.6.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main" style="flex-direction:column">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索 Trace ID、Session ID…" value="tr_9a8b7c6d" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <span class="badge badge-brand">Trace ID: tr_9a8b7c6d</span>
+        <span class="badge badge-gray">总耗时 3.8s</span>
+        <span class="badge badge-success">12 spans</span>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('导出 Trace JSON')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>导出</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <div class="trace-container">
+        <!-- 树形拓扑 -->
+        <div class="tree-panel">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px">Span 拓扑</div>
+          <div class="time-ruler"><span>0ms</span><span>950ms</span><span>1900ms</span><span>2850ms</span><span>3800ms</span></div>
+
+          <div class="tree-node">
+            <div class="tree-item active" onclick="selectSpan(this)">
+              <span class="tree-toggle">▼</span>
+              <span class="span-tag agent">AGENT</span>
+              <span class="tree-label">客服助手 · 工单 #4821</span>
+              <span class="tree-duration">3,800ms</span>
+            </div>
+            <div class="timeline-bar"><div class="timeline-fill" style="width:100%"></div></div>
+
+            <div class="tree-node" style="margin-top:4px">
+              <div class="tree-item" onclick="selectSpan(this)">
+                <span class="tree-toggle">▼</span>
+                <span class="span-tag llm">LLM</span>
+                <span class="tree-label">意图识别</span>
+                <span class="tree-duration">850ms</span>
+              </div>
+              <div class="timeline-bar"><div class="timeline-fill" style="width:22%;margin-left:0%"></div></div>
+
+              <div class="tree-node">
+                <div class="tree-item" onclick="selectSpan(this)">
+                  <span class="tree-toggle" style="visibility:hidden">▼</span>
+                  <span class="span-tag llm">LLM</span>
+                  <span class="tree-label">gpt-4o-mini.chat</span>
+                  <span class="tree-duration">842ms</span>
+                </div>
+                <div class="timeline-bar"><div class="timeline-fill" style="width:22%"></div></div>
+              </div>
+            </div>
+
+            <div class="tree-node" style="margin-top:4px">
+              <div class="tree-item" onclick="selectSpan(this)">
+                <span class="tree-toggle">▼</span>
+                <span class="span-tag retriever">RETRIEVER</span>
+                <span class="tree-label">知识库检索</span>
+                <span class="tree-duration">320ms</span>
+              </div>
+              <div class="timeline-bar"><div class="timeline-fill" style="width:8%;margin-left:22%"></div></div>
+
+              <div class="tree-node">
+                <div class="tree-item" onclick="selectSpan(this)">
+                  <span class="tree-toggle" style="visibility:hidden">▼</span>
+                  <span class="span-tag retriever">RETRIEVER</span>
+                  <span class="tree-label">vector_search</span>
+                  <span class="tree-duration">180ms</span>
+                </div>
+                <div class="timeline-bar"><div class="timeline-fill" style="width:5%;margin-left:22%"></div></div>
+              </div>
+              <div class="tree-node">
+                <div class="tree-item" onclick="selectSpan(this)">
+                  <span class="tree-toggle" style="visibility:hidden">▼</span>
+                  <span class="span-tag retriever">RETRIEVER</span>
+                  <span class="tree-label">rerank</span>
+                  <span class="tree-duration">140ms</span>
+                </div>
+                <div class="timeline-bar"><div class="timeline-fill" style="width:4%;margin-left:27%"></div></div>
+              </div>
+            </div>
+
+            <div class="tree-node" style="margin-top:4px">
+              <div class="tree-item" onclick="selectSpan(this)">
+                <span class="tree-toggle">▼</span>
+                <span class="span-tag llm">LLM</span>
+                <span class="tree-label">回复生成</span>
+                <span class="tree-duration">1,680ms</span>
+              </div>
+              <div class="timeline-bar"><div class="timeline-fill" style="width:44%;margin-left:30%"></div></div>
+
+              <div class="tree-node">
+                <div class="tree-item" onclick="selectSpan(this)">
+                  <span class="tree-toggle" style="visibility:hidden">▼</span>
+                  <span class="span-tag llm">LLM</span>
+                  <span class="tree-label">gpt-4o.chat</span>
+                  <span class="tree-duration">1,672ms</span>
+                </div>
+                <div class="timeline-bar"><div class="timeline-fill" style="width:44%;margin-left:30%"></div></div>
+              </div>
+            </div>
+
+            <div class="tree-node" style="margin-top:4px">
+              <div class="tree-item" onclick="selectSpan(this)">
+                <span class="tree-toggle">▼</span>
+                <span class="span-tag tool">TOOL</span>
+                <span class="tree-label">工单更新</span>
+                <span class="tree-duration">420ms</span>
+              </div>
+              <div class="timeline-bar"><div class="timeline-fill warn" style="width:11%;margin-left:74%"></div></div>
+
+              <div class="tree-node">
+                <div class="tree-item" onclick="selectSpan(this)">
+                  <span class="tree-toggle" style="visibility:hidden">▼</span>
+                  <span class="span-tag tool">TOOL</span>
+                  <span class="tree-label">zendesk.update_ticket</span>
+                  <span class="tree-duration">415ms</span>
+                </div>
+                <div class="timeline-bar"><div class="timeline-fill warn" style="width:11%;margin-left:74%"></div></div>
+              </div>
+            </div>
+
+            <div class="tree-node" style="margin-top:4px">
+              <div class="tree-item" onclick="selectSpan(this)">
+                <span class="tree-toggle" style="visibility:hidden">▼</span>
+                <span class="span-tag tool">TOOL</span>
+                <span class="tree-label">发送通知</span>
+                <span class="tree-duration">180ms</span>
+              </div>
+              <div class="timeline-bar"><div class="timeline-fill" style="width:5%;margin-left:85%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 详情面板 -->
+        <div class="detail-panel">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px">Span 详情</div>
+
+          <div class="detail-section">
+            <div class="detail-label">操作名</div>
+            <div class="detail-value" style="font-weight:600">客服助手 · 工单 #4821</div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">Span ID</div>
+            <div class="detail-value mono" style="font-size:11.5px;color:var(--text-tertiary)">sp_a1b2c3d4e5f6g7h8</div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">时间</div>
+            <div class="detail-value">
+              <div style="display:flex;justify-content:space-between"><span>开始</span><span class="mono" style="font-size:11.5px">14:32:08.120</span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px"><span>结束</span><span class="mono" style="font-size:11.5px">14:32:11.920</span></div>
+              <div style="display:flex;justify-content:space-between;margin-top:4px"><span>耗时</span><span class="mono" style="font-size:11.5px;color:var(--brand)">3,800ms</span></div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">状态</div>
+            <div class="detail-value"><span class="badge badge-success">OK</span></div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">输入</div>
+            <div class="detail-code">{
+  "session_id": "sess_8f3k2j4h5g",
+  "message": "我的订单什么时候发货？",
+  "context": {
+    "user_id": "usr_4821",
+    "channel": "web"
+  }
+}</div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">输出</div>
+            <div class="detail-code">{
+  "response": "您的订单 #ORD-2026-0942 已于今天上午 10:30 发货...",
+  "actions": ["update_ticket", "send_notification"],
+  "confidence": 0.94
+}</div>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">属性</div>
+            <div class="detail-value">
+              <div style="display:flex;justify-content:space-between;padding:4px 0"><span class="secondary">agent.name</span><span class="mono" style="font-size:11px">客服助手</span></div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0"><span class="secondary">agent.version</span><span class="mono" style="font-size:11px">v2.3.1</span></div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0"><span class="secondary">model</span><span class="mono" style="font-size:11px">gpt-4o</span></div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0"><span class="secondary">tokens.total</span><span class="mono" style="font-size:11px">1,847</span></div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0"><span class="secondary">tokens.input</span><span class="mono" style="font-size:11px">1,203</span></div>
+              <div style="display:flex;justify-content:space-between;padding:4px 0"><span class="secondary">tokens.output</span><span class="mono" style="font-size:11px">644</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function selectSpan(el) {
+      document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      const label = el.querySelector('.tree-label').textContent;
+      piToast('选中 Span: ' + label);
+    }
+  </script>
+</body>
+</html>

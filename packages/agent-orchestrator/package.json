@@ -1,0 +1,15 @@
+{
+  "name": "@workforge/agent-orchestrator",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@workforge/logging": "workspace:*"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "type": "module"
+}

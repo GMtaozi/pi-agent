@@ -1,0 +1,60 @@
+{
+  "name": "workforge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal AI content factory",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "skills/*",
+    "vendor/pi/packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @workforge/logging run build && pnpm --filter @workforge/sandbox run build && pnpm --filter @workforge/settings run build && pnpm --filter @workforge/memory run build && pnpm --filter @workforge/schedule run build && pnpm --filter @workforge/governance run build && pnpm --filter @workforge/workspace run build && pnpm --filter @workforge/workflow run build && pnpm --filter @workforge/agent-orchestrator run build && pnpm --filter @workforge/persistence run build && pnpm --filter @workforge/monitoring run build && pnpm --filter @workforge/tools run build && pnpm --filter @workforge/provider-runtime run build && pnpm --filter @workforge/skills run build && pnpm --filter @workforge/agent-engine run build && pnpm --filter @workforge/server run build",
+    "check": "pnpm -r --parallel run check",
+    "dev:all": "pnpm -r --parallel run dev",
+    "dev:web": "pnpm --filter ./apps/web run dev",
+    "dev:server": "pnpm --filter ./apps/server run dev",
+    "test": "pnpm -r --filter=./packages/* test && pnpm --filter server test && pnpm --filter web test",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "build:server": "pnpm --filter server build",
+    "build:web": "pnpm --filter web build",
+    "start": "cd apps/server && node dist/index.js",
+    "start:pm2": "pm2 start pm2.config.js",
+    "stop:pm2": "pm2 stop workforge-server",
+    "restart:pm2": "pm2 restart workforge-server",
+    "deploy": "docker-compose up -d --build",
+    "deploy:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build",
+    "logs": "pm2 logs workforge-server",
+    "test:server": "pnpm --filter server test",
+    "test:web": "pnpm --filter web test",
+    "test:all": "pnpm test:server && pnpm test:web",
+    "lint": "eslint apps packages",
+    "e2e": "playwright test"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
+    "@smithy/types": "^4.17.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.2",
+    "bcryptjs": "^2.4.3",
+    "eslint": "^9",
+    "eventsource": "^5.1.1",
+    "ioredis": "^5.4.1",
+    "mammoth": "^1.8.0",
+    "minio": "^8.0.1",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.13.1",
+    "typebox": "1.3.7",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.68.0",
+    "vitest": "^4.1.9",
+    "xlsx": "^0.18.5"
+  }
+}

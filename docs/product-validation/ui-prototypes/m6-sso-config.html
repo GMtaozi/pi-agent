@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · SSO 配置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:var(--text-tertiary), ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .provider-card{padding:20px;border-radius:var(--radius-lg);border:1px solid var(--border-color);background:var(--bg-secondary);transition:var(--transition-fast)}
+    .provider-card:hover{border-color:var(--border-strong)}
+    .provider-card.enabled{border-color:var(--success-color);box-shadow:0 0 0 1px var(--success-color),0 0 16px -8px var(--success-color)}
+    .provider-icon{width:48px;height:48px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:22px}
+    .toggle-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+    .toggle-switch input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;inset:0;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:999px;cursor:pointer;transition:var(--transition-fast)}
+    .toggle-slider::before{content:"";position:absolute;height:18px;width:18px;left:3px;top:2px;background:var(--text-secondary);border-radius:50%;transition:var(--transition-fast)}
+    .toggle-switch input:checked+.toggle-slider{background:var(--brand);border-color:var(--brand)}
+    .toggle-switch input:checked+.toggle-slider::before{transform:translateX(20px);background:#fff}
+    .step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+    .config-preview{background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:16px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);line-height:1.6;overflow-x:auto}
+    .badge-wechat{background:rgba(16,185,129,0.12);color:var(--success-color)}
+    .badge-dingtalk{background:rgba(59,130,246,0.12);color:var(--info-color)}
+    .badge-azure{background:rgba(99,102,241,0.12);color:#818cf8}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('打开添加 Provider 向导')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>添加 Provider</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <a class="nav-item" data-nav href="m6-solution-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span>行业方案</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="m6-cloud-subscription.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span>云端订阅</span></a>
+        <a class="nav-item active" data-nav href="m6-sso-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg><span>SSO 配置</span><span class="badge badge-brand nav-badge">M6</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v3.0.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索 Provider、配置…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('打开 SSO 帮助文档')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>帮助</button>
+        <button class="btn btn-primary btn-sm" onclick="piToast('打开添加 Provider 向导')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>添加 Provider</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>治理与合规</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>SSO 配置</span></div>
+        <div class="page-head"><div><h1 class="page-title">SSO 配置</h1><p class="page-subtitle">管理企业单点登录 Provider · 支持 OIDC / SAML 2.0</p></div></div>
+
+        <!-- SSO Status -->
+        <div class="card mb-4" style="border-color:var(--success-color)">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3"><span class="status-dot green" style="width:10px;height:10px"></span><div><div style="font-weight:500">SSO 已启用</div><div class="secondary" style="font-size:12px">2 个 Provider 已激活 · 12 名成员通过 SSO 登录</div></div></div>
+            <div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="piToast('测试 SSO 连接')">测试连接</button><button class="btn btn-danger btn-sm" onclick="piToast('已禁用 SSO')">禁用全部</button></div>
+          </div>
+        </div>
+
+        <!-- Provider List -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
+          <!-- WeChat Work -->
+          <div class="provider-card enabled">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3"><div class="provider-icon" style="background:linear-gradient(135deg,#10b981,#06b6d4)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg></div><div><div style="font-weight:600">企业微信</div><span class="badge badge-wechat">已启用</span></div></div>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="secondary" style="font-size:12px;margin-bottom:12px">CorpID: wwxxxxxxxxxxxxxxxx<br>AgentID: 1000002</div>
+            <div class="flex gap-2"><button class="btn btn-ghost btn-xs" onclick="piToast('编辑企业微信配置')">编辑</button><button class="btn btn-ghost btn-xs" onclick="piToast('查看使用统计')">统计</button></div>
+          </div>
+
+          <!-- DingTalk -->
+          <div class="provider-card enabled">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3"><div class="provider-icon" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2z"/></svg></div><div><div style="font-weight:600">钉钉</div><span class="badge badge-dingtalk">已启用</span></div></div>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="secondary" style="font-size:12px;margin-bottom:12px">AppKey: dingxxxxxxxxxxxxxxxx<br>CorpId: dingxxxxxxxxxxxxxxxx</div>
+            <div class="flex gap-2"><button class="btn btn-ghost btn-xs" onclick="piToast('编辑钉钉配置')">编辑</button><button class="btn btn-ghost btn-xs" onclick="piToast('查看使用统计')">统计</button></div>
+          </div>
+
+          <!-- Azure AD -->
+          <div class="provider-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3"><div class="provider-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg></div><div><div style="font-weight:600">Azure AD</div><span class="badge badge-gray">未配置</span></div></div>
+              <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="secondary" style="font-size:12px;margin-bottom:12px">Tenant ID: 未配置<br>Client ID: 未配置</div>
+            <div class="flex gap-2"><button class="btn btn-secondary btn-xs" onclick="piToast('配置 Azure AD')">配置</button><button class="btn btn-ghost btn-xs" onclick="piToast('删除')">删除</button></div>
+          </div>
+
+          <!-- Feishu -->
+          <div class="provider-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3"><div class="provider-icon" style="background:linear-gradient(135deg,#2563eb,#0ea5e9)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H4z"/><path d="M2 20h20"/></svg></div><div><div style="font-weight:600">飞书</div><span class="badge badge-gray">未配置</span></div></div>
+              <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="secondary" style="font-size:12px;margin-bottom:12px">App ID: 未配置<br>App Secret: 未配置</div>
+            <div class="flex gap-2"><button class="btn btn-secondary btn-xs" onclick="piToast('配置飞书')">配置</button><button class="btn btn-ghost btn-xs" onclick="piToast('删除')">删除</button></div>
+          </div>
+
+          <!-- Okta -->
+          <div class="provider-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3"><div class="provider-icon" style="background:linear-gradient(135deg,#64748b,#475569)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg></div><div><div style="font-weight:600">Okta</div><span class="badge badge-gray">未配置</span></div></div>
+              <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="secondary" style="font-size:12px;margin-bottom:12px">Org URL: 未配置<br>Client ID: 未配置</div>
+            <div class="flex gap-2"><button class="btn btn-secondary btn-xs" onclick="piToast('配置 Okta')">配置</button><button class="btn btn-ghost btn-xs" onclick="piToast('删除')">删除</button></div>
+          </div>
+
+          <!-- Add New -->
+          <div class="provider-card" style="border-style:dashed;display:flex;align-items:center;justify-content:center;min-height:180px;cursor:pointer" onclick="piToast('打开添加 Provider 向导')">
+            <div style="text-align:center"><div style="font-size:32px;color:var(--text-muted);margin-bottom:8px">+</div><div style="color:var(--text-tertiary);font-size:13px">添加新 Provider</div></div>
+          </div>
+        </div>
+
+        <!-- Add Provider Form -->
+        <div class="card mb-4">
+          <div class="card-title mb-4">添加 SSO Provider</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="field"><label class="field-label">Provider 类型</label><select class="select"><option>企业微信</option><option>钉钉</option><option>飞书</option><option>Azure AD</option><option>Okta</option><option>OIDC 通用</option><option>SAML 2.0</option></select></div>
+            <div class="field"><label class="field-label">显示名称</label><input type="text" class="input" placeholder="例如：集团总部 SSO" /></div>
+            <div class="field"><label class="field-label">Client ID / App ID</label><input type="text" class="input" placeholder="输入 Client ID" /></div>
+            <div class="field"><label class="field-label">Client Secret</label><input type="password" class="input" placeholder="输入 Client Secret" /></div>
+            <div class="field"><label class="field-label">Issuer URL / Token Endpoint</label><input type="text" class="input" placeholder="https://login.example.com/oauth2/v2.0" /></div>
+            <div class="field"><label class="field-label">Redirect URI</label><input type="text" class="input" value="https://pi-agent.example.com/auth/callback" readonly /></div>
+          </div>
+          <div class="flex gap-2 mt-4"><button class="btn btn-primary" onclick="piToast('Provider 已保存')">保存配置</button><button class="btn btn-secondary" onclick="piToast('取消')">取消</button></div>
+        </div>
+
+        <!-- SSO Settings -->
+        <div class="card">
+          <div class="card-title mb-4">SSO 全局设置</div>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between"><div><div style="font-weight:500;font-size:13px">强制 SSO 登录</div><div class="secondary" style="font-size:12px">启用后所有成员必须通过 SSO 登录</div></div><label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+            <div class="flex items-center justify-between"><div><div style="font-weight:500;font-size:13px">自动创建用户</div><div class="secondary" style="font-size:12px">SSO 登录时自动为新用户创建账户</div></div><label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="flex items-center justify-between"><div><div style="font-weight:500;font-size:13px">默认角色</div><div class="secondary" style="font-size:12px">自动创建用户的默认角色</div></div><select class="select" style="width:auto"><option>成员</option><option>访客</option></select></div>
+            <div class="flex items-center justify-between"><div><div style="font-weight:500;font-size:13px">SSO 登录域名</div><div class="secondary" style="font-size:12px">限制特定域名邮箱使用 SSO</div></div><input type="text" class="input" style="width:auto" placeholder="example.com" /></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+=== knowledge src ===
+embedding-client.d.ts.map
+embedding-client.ts
+index.d.ts.map
+index.ts
+knowledge-service.d.ts.map
+knowledge-service.test.ts
+knowledge-service.ts
+=== knowledge routes ===
+knowledge.ts
+=== all routes ===
+agent-versions.ts
+agents.ts
+artifacts.ts
+auth.ts
+batch.ts
+debug.ts
+deps.ts
+executions.ts
+governance.ts
+knowledge.ts
+memory.ts
+models.ts
+monitoring.ts
+notifications.ts
+orchestrator.ts
+platform.ts
+schedule.ts
+sessions.ts
+settings.ts
+skills.ts
+workflow.ts
+workspaces.ts

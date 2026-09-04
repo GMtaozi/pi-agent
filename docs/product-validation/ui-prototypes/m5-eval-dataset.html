@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 评测数据集管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .dataset-card{border-radius:var(--radius-lg);border:1px solid var(--border-color);background:var(--bg-secondary);overflow:hidden;transition:var(--transition-fast)}
+    .dataset-card:hover{border-color:var(--border-strong)}
+    .dataset-row{display:grid;grid-template-columns:1fr 100px 80px 100px 90px 80px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border-light);font-size:12.5px;transition:background var(--transition-fast)}
+    .dataset-row:hover{background:var(--bg-hover)}
+    .dataset-row:last-child{border-bottom:none}
+    .dataset-head{display:grid;grid-template-columns:1fr 100px 80px 100px 90px 80px;gap:12px;padding:9px 16px;font-size:11.5px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border-strong)}
+    .category-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500}
+    .cat-qa{background:var(--accent-light);color:var(--brand)}
+    .cat-reasoning{background:var(--accent-cyan-light);color:var(--accent-cyan)}
+    .cat-safety{background:rgba(242,139,130,.15);color:var(--error-color)}
+    .cat-code{background:rgba(253,214,99,.15);color:var(--warning-color)}
+    .cat-multilingual{background:rgba(129,201,149,.15);color:var(--success-color)}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    .modal{background:var(--bg-secondary);border:1px solid var(--border-strong);border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-elevated)}
+    .modal-header{padding:16px 20px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}
+    .modal-body{padding:20px}
+    .modal-footer{padding:14px 20px;border-top:1px solid var(--border-color);display:flex;justify-content:flex-end;gap:8px}
+    .upload-zone{border:2px dashed var(--border-color);border-radius:var(--radius-lg);padding:32px;text-align:center;transition:var(--transition-fast);cursor:pointer}
+    .upload-zone:hover{border-color:var(--brand);background:var(--accent-light)}
+    .upload-zone svg{color:var(--text-tertiary);margin-bottom:8px}
+    @media(max-width:900px){.dataset-row,.dataset-head{grid-template-columns:1fr 80px 70px}.dataset-row>*:nth-child(3),.dataset-row>*:nth-child(4),.dataset-row>*:nth-child(5),.dataset-head>*:nth-child(3),.dataset-head>*:nth-child(4),.dataset-head>*:nth-child(5){display:none}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="openModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>新建数据集</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <div class="nav-section-label">可观测性</div>
+        <a class="nav-item" data-nav href="m5-observability-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>可观测性仪表盘</span></a>
+        <a class="nav-item" data-nav href="m5-trace-viewer.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8L7 17M17 7l2.8-2.8"/></svg><span>调用链追踪</span></a>
+        <a class="nav-item" data-nav href="m5-anomaly-list.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.41 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>异常列表</span></a>
+        <a class="nav-item" data-nav href="m5-gateway-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg><span>AI 网关配置</span></a>
+        <a class="nav-item" data-nav href="m5-gateway-metrics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M12 7v5l3 3"/></svg><span>网关指标</span></a>
+        <a class="nav-item active" data-nav href="m5-eval-dataset.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg><span>评测数据集</span></a>
+        <a class="nav-item" data-nav href="m5-eval-run.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg><span>评测执行</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.6.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索数据集…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('导入数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>导入</button>
+        <button class="btn btn-primary btn-sm" onclick="openModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新建数据集</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>可观测性</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>评测数据集</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">评测数据集管理</h1>
+            <p class="page-subtitle">创建、管理和运行 Agent 评测数据集</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-brand">8 个数据集</span>
+            <span class="badge badge-gray">共 2,450 题</span>
+          </div>
+        </div>
+
+        <!-- 筛选 -->
+        <div class="flex items-center gap-2" style="margin-bottom:16px;flex-wrap:wrap">
+          <span class="filter-chip active">全部类别</span>
+          <span class="filter-chip">问答</span>
+          <span class="filter-chip">推理</span>
+          <span class="filter-chip">安全</span>
+          <span class="filter-chip">代码</span>
+          <span class="filter-chip">多语言</span>
+        </div>
+
+        <!-- 数据集列表 -->
+        <div class="dataset-card">
+          <div class="dataset-head"><div>数据集名称</div><div style="text-align:right">类别</div><div style="text-align:right">题目数</div><div style="text-align:right">创建日期</div><div style="text-align:right">最近评测</div><div>操作</div></div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">客服问答基准 v2.1</div>
+              <div class="secondary" style="font-size:11px">覆盖常见客服场景的标准问答评测集</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-qa">问答</span></div>
+            <div style="text-align:right" class="mono">500</div>
+            <div style="text-align:right" class="mono">2026-08-15</div>
+            <div style="text-align:right"><span class="badge badge-success">F1: 0.92</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">代码审查能力评测</div>
+              <div class="secondary" style="font-size:11px">评估 Agent 代码审查的准确性和召回率</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-code">代码</span></div>
+            <div style="text-align:right" class="mono">320</div>
+            <div style="text-align:right" class="mono" style="color:var(--text-tertiary)">2026-08-20</div>
+            <div style="text-align:right"><span class="badge badge-success">F1: 0.87</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">安全对齐评测集</div>
+              <div class="secondary" style="font-size:11px">检测 Agent 的安全性和对齐程度</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-safety">安全</span></div>
+            <div style="text-align:right" class="mono">280</div>
+            <div style="text-align:right" class="mono" style="color:var(--text-tertiary)">2026-08-25</div>
+            <div style="text-align:right"><span class="badge badge-warning">F1: 0.78</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">数学推理能力评测</div>
+              <div class="secondary" style="font-size:11px">多步骤数学问题求解能力测试</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-reasoning">推理</span></div>
+            <div style="text-align:right" class="mono">450</div>
+            <div style="text-align:right" class="mono" style="color:var(--text-tertiary)">2026-08-28</div>
+            <div style="text-align:right"><span class="badge badge-success">F1: 0.85</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">多语言翻译评测</div>
+              <div class="secondary" style="font-size:11px">中英日韩多语言翻译质量评测</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-multilingual">多语言</span></div>
+            <div style="text-align:right" class="mono">380</div>
+            <div style="text-align:right" class="mono" style="color:var(--text-tertiary)">2026-09-01</div>
+            <div style="text-align:right"><span class="badge badge-success">F1: 0.91</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">数据分析能力评测</div>
+              <div class="secondary" style="font-size:11px">SQL 生成与数据分析准确性评测</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-reasoning">推理</span></div>
+            <div style="text-align:right" class="mono">220</div>
+            <div style="text-align:right" class="mono" style="color:var(--text-tertiary)">2026-09-02</div>
+            <div style="text-align:right"><span class="badge badge-gray">未评测</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">知识检索准确性评测</div>
+              <div class="secondary" style="font-size:11px">RAG 检索准确率和召回率评测</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-qa">问答</span></div>
+            <div style="text-align:right" class="mono">180</div>
+            <div style="text-align:right" class="mono" style="color:var(--text-tertiary)">2026-09-03</div>
+            <div style="text-align:right"><span class="badge badge-success">F1: 0.89</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="dataset-row">
+            <div>
+              <div style="font-weight:500;margin-bottom:2px">幻觉检测评测集</div>
+              <div class="secondary" style="font-size:11px">检测 Agent 产生幻觉的倾向</div>
+            </div>
+            <div style="text-align:right"><span class="category-badge cat-safety">安全</span></div>
+            <div style="text-align:right" class="mono">120</div>
+            <div style="text-align:right" class="mono" style="color:var(--text-tertiary)">2026-09-04</div>
+            <div style="text-align:right"><span class="badge badge-warning">F1: 0.74</span></div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary btn-sm" onclick="piToast('开始运行评测')">运行评测</button>
+              <button class="btn btn-ghost btn-sm" onclick="piToast('编辑数据集')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 新建数据集 Modal -->
+  <div class="modal-overlay" id="datasetModal" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <div style="font-size:14px;font-weight:600">新建评测数据集</div>
+        <button class="icon-btn" onclick="closeModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label">数据集名称</label>
+          <input type="text" class="input" placeholder="例如：客服问答基准 v2.2" />
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label">类别</label>
+            <select class="select"><option>问答</option><option>推理</option><option>安全</option><option>代码</option><option>多语言</option></select>
+          </div>
+          <div class="field">
+            <label class="field-label">语言</label>
+            <select class="select"><option>中文</option><option>英文</option><option>中英双语</option><option>多语言</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">描述</label>
+          <textarea class="textarea" rows="2" placeholder="可选：描述此数据集的用途和覆盖范围"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">上传数据文件</label>
+          <div class="upload-zone" onclick="piToast('选择文件上传')">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <div style="font-size:13px;font-weight:500;margin-bottom:4px">点击或拖拽文件到此处</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">支持 JSON、JSONL、CSV 格式，最大 50MB</div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">评测指标</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-brand" style="cursor:pointer">准确率</span>
+            <span class="badge badge-brand" style="cursor:pointer">召回率</span>
+            <span class="badge badge-brand" style="cursor:pointer">F1</span>
+            <span class="badge badge-gray" style="cursor:pointer">BLEU</span>
+            <span class="badge badge-gray" style="cursor:pointer">ROUGE</span>
+            <span class="badge badge-gray" style="cursor:pointer">人工评分</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="closeModal(); piToast('数据集已创建')">创建数据集</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() { document.getElementById('datasetModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('datasetModal').style.display = 'none'; }
+    document.getElementById('datasetModal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+</body>
+</html>

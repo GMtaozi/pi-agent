@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 开发者中心</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .date-pill { font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary); }
+    .ver-btn { transition:var(--transition-fast); }
+    .ver-btn:hover { border-color:var(--brand); color:var(--brand); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('打开提交插件')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>提交插件</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span><span class="badge badge-brand nav-badge">NEW</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item active" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+        <div class="nav-section-label">对话</div>
+        <a class="nav-item" data-nav href="chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg><span>对话调试</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.5.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索我的插件、版本…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="piToast('打开提交插件向导')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>提交插件</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>扩展生态</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>开发者中心</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">开发者中心</h1>
+            <p class="page-subtitle">管理你发布的插件 · 提交审核 · 版本迭代与发布</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-brand">认证开发者</span>
+            <span class="badge badge-gray">林知遥 · @zhiyao</span>
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="card"><div class="secondary" style="font-size:12px">已发布插件</div><div style="font-size:26px;font-weight:700;margin-top:4px">3</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">2 官方 · 1 社区</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">总安装量</div><div style="font-size:26px;font-weight:700;margin-top:4px">54.2k</div><span class="badge badge-success" style="display:inline-block;margin-top:4px">↑ 8.1%</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">综合评分</div><div style="font-size:26px;font-weight:700;margin-top:4px">4.7</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">1,284 条评价</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">本月收益</div><div style="font-size:26px;font-weight:700;margin-top:4px">¥3,860</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">分成计划</span></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Left: plugin list -->
+          <div class="lg:col-span-2">
+            <div class="card" style="padding:0;overflow:hidden">
+              <div class="card-head" style="padding:16px 20px;margin:0;border-bottom:1px solid var(--border-color)">
+                <div class="card-title">我的插件</div>
+                <div class="segmented" data-seg-group>
+                  <button class="seg-btn active" data-seg>全部</button>
+                  <button class="seg-btn" data-seg>审核中</button>
+                  <button class="seg-btn" data-seg>已发布</button>
+                </div>
+              </div>
+              <!-- plugin row -->
+              <div style="padding:16px 20px;border-bottom:1px solid var(--border-light)">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+                    <div>
+                      <div class="flex items-center gap-2"><span style="font-weight:600;font-size:15px">网页抓取器</span><span class="badge badge-success">已发布</span><span class="badge badge-brand">官方</span></div>
+                      <div class="secondary" style="font-size:12px">结构化网页提取 · v2.4.1 · 安装 23.1k</div>
+                    </div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="piToast('打开网页抓取器版本管理')">版本管理</button>
+                </div>
+                <div class="flex items-center gap-4 mt-3 text-sm secondary">
+                  <span class="flex items-center gap-1"><span class="status-dot green"></span>生产环境正常</span>
+                  <span>★ 4.8</span>
+                  <span>投诉 0</span>
+                  <span class="date-pill">更新于 2026-08-21</span>
+                </div>
+              </div>
+              <div style="padding:16px 20px;border-bottom:1px solid var(--border-light)">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#10b981,#06b6d4)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                    <div>
+                      <div class="flex items-center gap-2"><span style="font-weight:600;font-size:15px">PDF 智能解析</span><span class="badge badge-success">已发布</span><span class="badge badge-gray">社区</span></div>
+                      <div class="secondary" style="font-size:12px">表格/表单抽取 · v1.3.0 · 安装 9.8k</div>
+                    </div>
+                  </div>
+                  <button class="btn btn-outline btn-sm" onclick="piToast('打开 PDF 智能解析版本管理')">版本管理</button>
+                </div>
+                <div class="flex items-center gap-4 mt-3 text-sm secondary">
+                  <span class="flex items-center gap-1"><span class="status-dot green"></span>生产环境正常</span>
+                  <span>★ 4.5</span>
+                  <span>投诉 2</span>
+                  <span class="date-pill">更新于 2026-08-09</span>
+                </div>
+              </div>
+              <div style="padding:16px 20px;border-bottom:1px solid var(--border-light)">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-3">
+                    <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#8b5cf6)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6v6H9z"/></svg></div>
+                    <div>
+                      <div class="flex items-center gap-2"><span style="font-weight:600;font-size:15px">本地模型推理</span><span class="badge badge-warning">审核中</span><span class="badge badge-gray">社区</span></div>
+                      <div class="secondary" style="font-size:12px">Ollama 接入 · v0.9.2 · 提交于 3 天前</div>
+                    </div>
+                  </div>
+                  <button class="btn btn-secondary btn-sm" onclick="piToast('查看审核进度')">审核进度</button>
+                </div>
+                <div class="flex items-center gap-4 mt-3 text-sm secondary">
+                  <span class="flex items-center gap-1"><span class="status-dot amber"></span>等待安全扫描</span>
+                  <span>阶段 2/4</span>
+                  <span class="date-pill">预计 8-28 完成</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Version management -->
+            <div class="card mt-4">
+              <div class="card-head"><div class="card-title">版本管理 · 网页抓取器</div><button class="btn btn-primary btn-xs" onclick="piToast('发布新版本')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>发布版本</button></div>
+              <table class="table">
+                <thead><tr><th>版本</th><th>状态</th><th>发布时间</th><th>安装量</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td class="mono"><b>2.4.1</b> <span class="badge badge-brand" style="margin-left:4px">最新</span></td><td><span class="badge badge-success">生产</span></td><td class="secondary" style="font-size:12px">2026-08-21</td><td class="secondary" style="font-size:12px">23.1k</td><td class="text-right"><button class="btn btn-ghost btn-xs" onclick="piToast('查看 2.4.1 变更')">变更</button></td></tr>
+                  <tr><td class="mono">2.3.0</td><td><span class="badge badge-gray">归档</span></td><td class="secondary" style="font-size:12px">2026-07-10</td><td class="secondary" style="font-size:12px">18.4k</td><td class="text-right"><button class="btn btn-ghost btn-xs" onclick="piToast('查看 2.3.0 变更')">变更</button></td></tr>
+                  <tr><td class="mono">2.2.3</td><td><span class="badge badge-gray">归档</span></td><td class="secondary" style="font-size:12px">2026-05-30</td><td class="secondary" style="font-size:12px">11.2k</td><td class="text-right"><button class="btn btn-ghost btn-xs" onclick="piToast('查看 2.2.3 变更')">变更</button></td></tr>
+                  <tr><td class="mono">1.8.0</td><td><span class="badge badge-gray">归档</span></td><td class="secondary" style="font-size:12px">2026-03-12</td><td class="secondary" style="font-size:12px">4.6k</td><td class="text-right"><button class="btn btn-ghost btn-xs" onclick="piToast('查看 1.8.0 变更')">变更</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right: review status + quick actions -->
+          <div class="flex flex-col gap-4">
+            <div class="card">
+              <div class="card-title mb-3" style="font-size:14px">审核进度 · 本地模型推理</div>
+              <div class="flex flex-col gap-3">
+                <div class="flex items-center gap-3"><span class="status-dot green"></span><div class="flex-1"><div style="font-size:13px;font-weight:500">1 · 提交资料</div><div class="muted" style="font-size:11px">已完成</div></div><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--success-color)" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+                <div class="flex items-center gap-3"><span class="status-dot green"></span><div class="flex-1"><div style="font-size:13px;font-weight:500">2 · 安全扫描</div><div class="muted" style="font-size:11px">已完成</div></div><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--success-color)" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+                <div class="flex items-center gap-3"><span class="status-dot amber"></span><div class="flex-1"><div style="font-size:13px;font-weight:500">3 · 功能测试</div><div class="muted" style="font-size:11px">进行中 · 2/5 用例通过</div></div></div>
+                <div class="flex items-center gap-3"><span class="status-dot gray"></span><div class="flex-1"><div style="font-size:13px;font-weight:500;color:var(--text-tertiary)">4 · 人工复审</div><div class="muted" style="font-size:11px">待开始</div></div></div>
+              </div>
+              <div class="progress mt-4" style="margin-top:12px"><span style="width:60%"></span></div>
+              <div class="flex justify-between" style="margin-top:6px"><span class="muted" style="font-size:11px">60%</span><span class="muted" style="font-size:11px">预计 8-28</span></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title mb-3" style="font-size:14px">快速开始</div>
+              <div class="flex flex-col gap-2">
+                <button class="btn btn-secondary btn-sm justify-start" style="justify-content:flex-start" onclick="piToast('打开插件脚手架')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H4z"/><path d="M2 20h20"/></svg>下载 SDK 脚手架</button>
+                <button class="btn btn-secondary btn-sm justify-start" style="justify-content:flex-start" onclick="piToast('打开开发文档')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>阅读开发文档</button>
+                <button class="btn btn-secondary btn-sm justify-start" style="justify-content:flex-start" onclick="piToast('打开签名工具')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7l-8-5z"/></svg>代码签名工具</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title mb-3" style="font-size:14px">收益概览</div>
+              <div class="flex items-center justify-between mb-2"><span class="secondary" style="font-size:12px">本月分成</span><span style="font-weight:600">¥3,860</span></div>
+              <div class="flex items-center justify-between mb-2"><span class="secondary" style="font-size:12px">累计分成</span><span style="font-weight:600">¥21,420</span></div>
+              <div class="flex items-center justify-between"><span class="secondary" style="font-size:12px">待结算</span><span style="font-weight:600;color:var(--warning-color)">¥1,205</span></div>
+              <button class="btn btn-primary btn-sm w-full mt-3" style="width:100%" onclick="piToast('发起提现申请')">申请提现</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="share-modal.js"></script>
+</body>
+</html>

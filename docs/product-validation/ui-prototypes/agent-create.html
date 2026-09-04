@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 创建 Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark">
+          <div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div>
+          <span class="brand-text brand-name">pi<b>·</b>agent</span>
+        </div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('正在创建新 Agent…')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>新建 Agent</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item active" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/><circle cx="18.5" cy="7" r="2.2"/><path d="M20 13a4 4 0 010 8"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="workflow.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 013 3v6"/></svg><span>工作流编排</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span><span class="badge badge-brand nav-badge">3</span></a>
+        <div class="nav-section-label">对话</div>
+        <a class="nav-item" data-nav href="chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg><span>对话调试</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.3.1</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <button class="icon-btn" onclick="piToast('暂无新通知')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="dot"></span></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content" style="max-width:1080px;margin:0 auto">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><a href="agents.html">Agent 管理</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>创建</span></div>
+        <div class="page-head"><div><h1 class="page-title">创建 Agent</h1><p class="page-subtitle">三步完成：选择模板 → 描述并预览 → 保存发布</p></div></div>
+
+        <!-- Step indicator -->
+        <div class="flex items-center gap-2 mb-6 flex-wrap" data-seg-group>
+          <button class="seg-btn active" data-seg data-seg-target="step1" style="padding:10px 16px">
+            <span class="status-dot green"></span> 1 · 模板与描述
+          </button>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          <button class="seg-btn" data-seg data-seg-target="step2" style="padding:10px 16px">
+            <span class="status-dot gray"></span> 2 · 预览编辑
+          </button>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          <button class="seg-btn" data-seg data-seg-target="step3" style="padding:10px 16px">
+            <span class="status-dot gray"></span> 3 · 保存发布
+          </button>
+        </div>
+
+        <!-- STEP 1 -->
+        <section data-seg-panel="step1">
+          <div class="card mb-4">
+            <div class="card-head"><div class="card-title">选择模板</div><span class="card-sub">从场景模板开始，可后续自定义</span></div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="tplGrid">
+              <button class="tpl-card card-hover" data-tpl style="text-align:left;padding:14px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-secondary)">
+                <div class="agent-ico" style="width:38px;height:38px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div>
+                <div style="font-weight:600;margin-top:10px">智能客服</div>
+                <div class="secondary" style="font-size:12px">售后咨询 · 工单流转</div>
+              </button>
+              <button class="tpl-card card-hover" data-tpl style="text-align:left;padding:14px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-secondary)">
+                <div class="agent-ico" style="width:38px;height:38px;background:linear-gradient(135deg,#06b6d4,#3b82f6)">数</div>
+                <div style="font-weight:600;margin-top:10px">数据分析师</div>
+                <div class="secondary" style="font-size:12px">报表 · SQL · 可视化</div>
+              </button>
+              <button class="tpl-card card-hover" data-tpl style="text-align:left;padding:14px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-secondary)">
+                <div class="agent-ico" style="width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#8b5cf6)">代</div>
+                <div style="font-weight:600;margin-top:10px">代码审查</div>
+                <div class="secondary" style="font-size:12px">PR 评审 · 规范检查</div>
+              </button>
+              <button class="tpl-card card-hover" data-tpl style="text-align:left;padding:14px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-secondary)">
+                <div class="agent-ico" style="width:38px;height:38px;background:linear-gradient(135deg,#10b981,#06b6d4)">招</div>
+                <div style="font-weight:600;margin-top:10px">招聘筛选</div>
+                <div class="secondary" style="font-size:12px">简历解析 · 初筛</div>
+              </button>
+              <button class="tpl-card card-hover" data-tpl style="text-align:left;padding:14px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-secondary)">
+                <div class="agent-ico" style="width:38px;height:38px;background:linear-gradient(135deg,#8b5cf6,#ec4899)">R</div>
+                <div style="font-weight:600;margin-top:10px">RAG 问答</div>
+                <div class="secondary" style="font-size:12px">知识库检索增强</div>
+              </button>
+              <button class="tpl-card card-hover" data-tpl style="text-align:left;padding:14px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-secondary)">
+                <div class="agent-ico" style="width:38px;height:38px;background:linear-gradient(135deg,#64748b,#475569)">+</div>
+                <div style="font-weight:600;margin-top:10px">从空白创建</div>
+                <div class="secondary" style="font-size:12px">完全自定义</div>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div class="card-title">描述你的 Agent</div></div>
+            <div class="field">
+              <label class="field-label">一句话需求</label>
+              <textarea class="textarea" rows="3" placeholder="例如：我希望创建一个能自动回复电商售后问题的客服助手，能查询订单、发起退款，并用友好语气安抚用户…"></textarea>
+              <div class="field-hint">描述越具体，AI 生成的角色与指令越准确。</div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="field" style="margin:0">
+                <label class="field-label">基础模型</label>
+                <select class="select"><option>GPT-4o · 推荐</option><option>Claude 3.5 Sonnet</option><option>Qwen-Max</option><option>DeepSeek-V3</option></select>
+              </div>
+              <div class="field" style="margin:0">
+                <label class="field-label">语言</label>
+                <select class="select"><option>中文（简体）</option><option>English</option><option>双语</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 mt-4">
+            <button class="btn btn-ghost" onclick="location.href='agents.html'">取消</button>
+            <button class="btn btn-primary" onclick="document.querySelector('[data-seg-target=\\'step2\\']').click()">下一步：预览编辑 →</button>
+          </div>
+        </section>
+
+        <!-- STEP 2 -->
+        <section data-seg-panel="step2" style="display:none">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="card">
+              <div class="card-head"><div class="card-title">配置</div></div>
+              <div class="field"><label class="field-label">名称</label><input class="input" value="智能客服 Copilot" /></div>
+              <div class="field"><label class="field-label">角色设定</label><textarea class="textarea" rows="3">你是一名专业的电商售后客服，语气友好、耐心，优先解决用户问题。</textarea></div>
+              <div class="field"><label class="field-label">系统指令</label><textarea class="textarea" rows="4">1. 先确认用户订单号；2. 能查询物流与退款政策；3. 无法处理时转人工。</textarea></div>
+              <div class="field" style="margin:0">
+                <label class="field-label">工具与能力</label>
+                <div class="flex flex-col gap-2 mt-1">
+                  <label class="flex items-center justify-between" style="padding:10px;border:1px solid var(--border-color);border-radius:var(--radius-md)"><span class="flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M4 4h16v4H4zM4 12h10v4H4zM4 20h16v-4H4z"/></svg>订单查询</span><span class="switch"><input type="checkbox" checked><span class="slider"></span></span></label>
+                  <label class="flex items-center justify-between" style="padding:10px;border:1px solid var(--border-color);border-radius:var(--radius-md)"><span class="flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>知识库检索</span><span class="switch"><input type="checkbox" checked><span class="slider"></span></span></label>
+                  <label class="flex items-center justify-between" style="padding:10px;border:1px solid var(--border-color);border-radius:var(--radius-md)"><span class="flex items-center gap-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>发起退款</span><span class="switch"><input type="checkbox"><span class="slider"></span></span></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="background:var(--bg-canvas)">
+              <div class="card-head"><div class="card-title">实时预览</div><span class="badge badge-cyan">草稿</span></div>
+              <div class="flex flex-col gap-3" style="min-height:320px">
+                <div class="flex gap-2"><div class="agent-ico" style="width:30px;height:30px;font-size:12px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div><div class="p-3 rounded-xl" style="background:var(--bg-secondary);border:1px solid var(--border-color);max-width:80%;font-size:13px">你好！我是你的智能客服助手，请问有什么可以帮你？😊</div></div>
+                <div class="flex gap-2 flex-row-reverse"><div class="agent-ico" style="width:30px;height:30px;font-size:12px;background:var(--bg-tertiary)">我</div><div class="p-3 rounded-xl" style="background:var(--brand);color:#fff;max-width:80%;font-size:13px">我的订单 #88231 还没发货</div></div>
+                <div class="flex gap-2"><div class="agent-ico" style="width:30px;height:30px;font-size:12px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div><div class="p-3 rounded-xl" style="background:var(--bg-secondary);border:1px solid var(--border-color);max-width:80%;font-size:13px">正在为你查询订单 #88231 的物流状态…<div class="flex gap-1 mt-2"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div></div>
+              </div>
+              <div class="flex items-center gap-2 mt-3 p-2 rounded-xl" style="border:1px solid var(--border-color);background:var(--bg-input)">
+                <input class="input" style="border:none;background:transparent" placeholder="输入消息测试…" />
+                <button class="btn btn-primary btn-icon btn-sm" onclick="piToast('发送测试消息')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <div class="flex justify-between gap-2 mt-4">
+            <button class="btn btn-secondary" onclick="document.querySelector('[data-seg-target=\\'step1\\']').click()">← 上一步</button>
+            <button class="btn btn-primary" onclick="document.querySelector('[data-seg-target=\\'step3\\']').click()">下一步：保存发布 →</button>
+          </div>
+        </section>
+
+        <!-- STEP 3 -->
+        <section data-seg-panel="step3" style="display:none">
+          <div class="card" style="max-width:640px;margin:0 auto">
+            <div class="card-head"><div class="card-title">确认并发布</div></div>
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="border:1px solid var(--border-color);background:var(--bg-canvas)">
+              <div class="agent-ico" style="width:48px;height:48px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div>
+              <div class="flex-1"><div style="font-weight:600;font-size:16px">智能客服 Copilot</div><div class="secondary" style="font-size:12px">模板：智能客服 · 模型 GPT-4o</div></div>
+              <span class="badge badge-success">就绪</span>
+            </div>
+            <div class="divider"></div>
+            <div class="field" style="margin:0"><label class="field-label">可见范围</label>
+              <div class="segmented" data-seg-group style="width:100%">
+                <button class="seg-btn active" data-seg style="flex:1;justify-content:center">私有</button>
+                <button class="seg-btn" data-seg style="flex:1;justify-content:center">团队</button>
+                <button class="seg-btn" data-seg style="flex:1;justify-content:center">公开</button>
+              </div>
+            </div>
+            <label class="flex items-center justify-between mt-4" style="padding:12px;border:1px solid var(--border-color);border-radius:var(--radius-md)">
+              <span><div style="font-weight:500">发布后立即启用</div><div class="secondary" style="font-size:12px">关闭则保存为草稿</div></span>
+              <span class="switch"><input type="checkbox" checked><span class="slider"></span></span>
+            </label>
+          </div>
+          <div class="flex justify-between gap-2 mt-4" style="max-width:640px;margin-left:auto;margin-right:auto">
+            <button class="btn btn-secondary" onclick="document.querySelector('[data-seg-target=\\'step2\\']').click()">← 上一步</button>
+            <div class="flex gap-2">
+              <button class="btn btn-ghost" onclick="piToast('已保存为草稿')">保存草稿</button>
+              <button class="btn btn-primary" onclick="piToast('🎉 Agent 已发布')">🚀 发布 Agent</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // template selection highlight
+    document.querySelectorAll('[data-tpl]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        document.querySelectorAll('[data-tpl]').forEach(function (t) { t.style.borderColor = 'var(--border-color)'; t.style.boxShadow = 'none'; });
+        el.style.borderColor = 'var(--brand)';
+        el.style.boxShadow = '0 0 0 3px var(--accent-light)';
+        piToast('已选择模板：' + el.querySelector('div:nth-child(2)').textContent);
+      });
+    });
+  </script>
+</body>
+</html>

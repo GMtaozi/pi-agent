@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 行业模板包</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <script src="share-modal.js"></script>
+  <style>
+    .ind-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-md);cursor:pointer;color:var(--text-secondary);transition:var(--transition-fast);border:1px solid transparent; }
+    .ind-item:hover { background:var(--bg-hover);color:var(--text-primary); }
+    .ind-item.active { background:var(--bg-tertiary);color:var(--text-primary);border-color:var(--border-color); }
+    .ind-ico { width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:600;font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="location.href='agent-create.html'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>新建 Agent</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/><circle cx="18.5" cy="7" r="2.2"/><path d="M20 13a4 4 0 010 8"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item active" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <a class="nav-item" data-nav href="workflow.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 013 3v6"/></svg><span>工作流编排</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span><span class="badge badge-brand nav-badge">3</span></a>
+        <div class="nav-section-label">对话</div>
+        <a class="nav-item" data-nav href="chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg><span>对话调试</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.4.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索模板包…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="piToast('已安装当前模板包')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>安装模板包</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="m2-template-market.html">模板市场</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>行业模板包</span></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <aside class="lg:col-span-1">
+            <div class="card" style="padding:12px">
+              <div class="card-title mb-2" style="font-size:14px">行业分类</div>
+              <div class="flex flex-col gap-1" data-seg-group>
+                <div class="ind-item active" data-seg data-seg-target="ind-ecom"><div class="ind-ico" style="background:linear-gradient(135deg,#8b5cf6,#06b6d4)">电</div><div><div style="font-weight:600;font-size:13px">电商零售</div><div class="secondary" style="font-size:11px">9 个模板</div></div></div>
+                <div class="ind-item" data-seg data-seg-target="ind-fin"><div class="ind-ico" style="background:linear-gradient(135deg,#10b981,#06b6d4)">金</div><div><div style="font-weight:600;font-size:13px">金融</div><div class="secondary" style="font-size:11px">7 个模板</div></div></div>
+                <div class="ind-item" data-seg data-seg-target="ind-med"><div class="ind-ico" style="background:linear-gradient(135deg,#f59e0b,#8b5cf6)">医</div><div><div style="font-weight:600;font-size:13px">医疗健康</div><div class="secondary" style="font-size:11px">6 个模板</div></div></div>
+                <div class="ind-item" data-seg data-seg-target="ind-law"><div class="ind-ico" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">法</div><div><div style="font-weight:600;font-size:13px">法务合规</div><div class="secondary" style="font-size:11px">5 个模板</div></div></div>
+                <div class="ind-item" data-seg data-seg-target="ind-edu"><div class="ind-ico" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)">教</div><div><div style="font-weight:600;font-size:13px">教育培训</div><div class="secondary" style="font-size:11px">8 个模板</div></div></div>
+              </div>
+            </div>
+          </aside>
+
+          <section class="lg:col-span-3">
+            <div data-seg-panel="ind-ecom">
+              <div class="card mb-4" style="background:linear-gradient(135deg,var(--accent-light),transparent)">
+                <div class="flex items-center gap-4 flex-wrap"><div class="ind-ico" style="width:56px;height:56px;font-size:22px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">电</div><div class="flex-1 min-w-0"><div class="flex items-center gap-2"><h2 class="page-title" style="font-size:20px">电商零售行业模板包</h2><span class="badge badge-brand">官方</span></div><p class="secondary" style="font-size:13px;margin-top:2px">覆盖售前导购、售中客服、售后履约全链路 AI 能力</p></div><div class="flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openShare({title:'电商零售行业模板包',type:'template'})">分享</button><button class="btn btn-primary btn-sm" onclick="piToast('已安装电商模板包')">安装</button></div></div>
+                <div class="grid grid-cols-3 gap-3 mt-4"><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">Agent</div><div style="font-weight:700;font-size:20px">5</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">工作流</div><div style="font-weight:700;font-size:20px">3</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">知识库</div><div style="font-weight:700;font-size:20px">4</div></div></div>
+              </div>
+              <div class="tabs mb-3"><button class="tab active" data-nav>全部</button><button class="tab" data-nav>Agent</button><button class="tab" data-nav>工作流</button><button class="tab" data-nav>知识库</button></div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="grid-ecom"></div>
+            </div>
+
+            <div data-seg-panel="ind-fin" style="display:none">
+              <div class="card mb-4" style="background:linear-gradient(135deg,var(--accent-light),transparent)">
+                <div class="flex items-center gap-4 flex-wrap"><div class="ind-ico" style="width:56px;height:56px;font-size:22px;background:linear-gradient(135deg,#10b981,#06b6d4)">金</div><div class="flex-1 min-w-0"><h2 class="page-title" style="font-size:20px">金融行业模板包</h2><p class="secondary" style="font-size:13px">合规优先的投研、风控、客服方案</p></div><div class="flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openShare({title:'金融行业模板包',type:'template'})">分享</button><button class="btn btn-primary btn-sm" onclick="piToast('已安装金融模板包')">安装</button></div></div>
+                <div class="grid grid-cols-3 gap-3 mt-4"><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">Agent</div><div style="font-weight:700;font-size:20px">4</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">工作流</div><div style="font-weight:700;font-size:20px">2</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">知识库</div><div style="font-weight:700;font-size:20px">3</div></div></div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="grid-fin"></div>
+            </div>
+
+            <div data-seg-panel="ind-med" style="display:none">
+              <div class="card mb-4" style="background:linear-gradient(135deg,var(--accent-light),transparent)">
+                <div class="flex items-center gap-4 flex-wrap"><div class="ind-ico" style="width:56px;height:56px;font-size:22px;background:linear-gradient(135deg,#f59e0b,#8b5cf6)">医</div><div class="flex-1 min-w-0"><h2 class="page-title" style="font-size:20px">医疗健康行业模板包</h2><p class="secondary" style="font-size:13px">患者服务与医学知识助手的合规方案</p></div><div class="flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openShare({title:'医疗健康行业模板包',type:'template'})">分享</button><button class="btn btn-primary btn-sm" onclick="piToast('已安装医疗模板包')">安装</button></div></div>
+                <div class="grid grid-cols-3 gap-3 mt-4"><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">Agent</div><div style="font-weight:700;font-size:20px">3</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">工作流</div><div style="font-weight:700;font-size:20px">2</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">知识库</div><div style="font-weight:700;font-size:20px">2</div></div></div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="grid-med"></div>
+            </div>
+
+            <div data-seg-panel="ind-law" style="display:none">
+              <div class="card mb-4" style="background:linear-gradient(135deg,var(--accent-light),transparent)">
+                <div class="flex items-center gap-4 flex-wrap"><div class="ind-ico" style="width:56px;height:56px;font-size:22px;background:linear-gradient(135deg,#ec4899,#8b5cf6)">法</div><div class="flex-1 min-w-0"><h2 class="page-title" style="font-size:20px">法务合规行业模板包</h2><p class="secondary" style="font-size:13px">合同、条款与诉讼辅助的 AI 套件</p></div><div class="flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openShare({title:'法务合规行业模板包',type:'template'})">分享</button><button class="btn btn-primary btn-sm" onclick="piToast('已安装法务模板包')">安装</button></div></div>
+                <div class="grid grid-cols-3 gap-3 mt-4"><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">Agent</div><div style="font-weight:700;font-size:20px">3</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">工作流</div><div style="font-weight:700;font-size:20px">1</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">知识库</div><div style="font-weight:700;font-size:20px">2</div></div></div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="grid-law"></div>
+            </div>
+
+            <div data-seg-panel="ind-edu" style="display:none">
+              <div class="card mb-4" style="background:linear-gradient(135deg,var(--accent-light),transparent)">
+                <div class="flex items-center gap-4 flex-wrap"><div class="ind-ico" style="width:56px;height:56px;font-size:22px;background:linear-gradient(135deg,#06b6d4,#3b82f6)">教</div><div class="flex-1 min-w-0"><h2 class="page-title" style="font-size:20px">教育培训行业模板包</h2><p class="secondary" style="font-size:13px">备课、答疑与学情分析的教助方案</p></div><div class="flex gap-2"><button class="btn btn-ghost btn-sm" onclick="openShare({title:'教育培训行业模板包',type:'template'})">分享</button><button class="btn btn-primary btn-sm" onclick="piToast('已安装教育模板包')">安装</button></div></div>
+                <div class="grid grid-cols-3 gap-3 mt-4"><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">Agent</div><div style="font-weight:700;font-size:20px">4</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">工作流</div><div style="font-weight:700;font-size:20px">2</div></div><div class="p-3 rounded-lg" style="background:var(--bg-canvas)"><div class="secondary" style="font-size:11px">知识库</div><div style="font-weight:700;font-size:20px">2</div></div></div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="grid-edu"></div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    var PACKS = {
+      ecom: [
+        {n:'智能导购',d:'对话式商品推荐与凑单',t:'Agent',g:['#8b5cf6','#06b6d4'],c:'购'},
+        {n:'售后客服',d:'退换货 / 物流 / 发票',t:'Agent',g:['#06b6d4','#3b82f6'],c:'客'},
+        {n:'订单履约流',d:'下单→发货→签收编排',t:'工作流',g:['#f59e0b','#8b5cf6'],c:'流'},
+        {n:'营销活动策划',d:'大促方案自动生成',t:'工作流',g:['#ec4899','#8b5cf6'],c:'销'},
+        {n:'商品知识库',d:'SKU / 规格 / 政策',t:'知识库',g:['#10b981','#06b6d4'],c:'库'},
+        {n:'竞品情报库',d:'行业报告检索增强',t:'知识库',g:['#64748b','#475569'],c:'析'}
+      ],
+      fin: [
+        {n:'智能投研助手',d:'研报摘要与归因',t:'Agent',g:['#10b981','#06b6d4'],c:'研'},
+        {n:'信贷风控审查',d:'材料核验与预警',t:'Agent',g:['#06b6d4','#3b82f6'],c:'控'},
+        {n:'合规审查流',d:'监管条款自动比对',t:'工作流',g:['#f59e0b','#8b5cf6'],c:'合'},
+        {n:'法规知识库',d:'最新监管文件检索',t:'知识库',g:['#64748b','#475569'],c:'规'}
+      ],
+      med: [
+        {n:'智能导诊',d:'症状初筛与分诊',t:'Agent',g:['#f59e0b','#8b5cf6'],c:'诊'},
+        {n:'用药咨询',d:'说明书与相互作用',t:'Agent',g:['#8b5cf6','#06b6d4'],c:'药'},
+        {n:'随访管理流',d:'复诊提醒编排',t:'工作流',g:['#06b6d4','#3b82f6'],c:'随'},
+        {n:'医学文献库',d:'指南与论文检索',t:'知识库',g:['#10b981','#06b6d4'],c:'献'}
+      ],
+      law: [
+        {n:'合同审查',d:'风险条款识别',t:'Agent',g:['#ec4899','#8b5cf6'],c:'合'},
+        {n:'条款起草',d:'模板生成与填空',t:'Agent',g:['#8b5cf6','#06b6d4'],c:'草'},
+        {n:'合规审查流',d:'多法域比对',t:'工作流',g:['#f59e0b','#8b5cf6'],c:'审'},
+        {n:'法规知识库',d:'法条与判例检索',t:'知识库',g:['#64748b','#475569'],c:'法'}
+      ],
+      edu: [
+        {n:'智能助教',d:'作业答疑与讲解',t:'Agent',g:['#06b6d4','#3b82f6'],c:'教'},
+        {n:'备课助手',d:'大纲与课件生成',t:'Agent',g:['#8b5cf6','#06b6d4'],c:'课'},
+        {n:'学情分析流',d:'成绩归因编排',t:'工作流',g:['#f59e0b','#8b5cf6'],c:'析'},
+        {n:'课程知识库',d:'教材与题库检索',t:'知识库',g:['#10b981','#06b6d4'],c:'库'}
+      ]
+    };
+    function renderPack(p){
+      return '<div class="card card-hover"><div class="flex items-center gap-3"><div class="agent-ico" style="width:40px;height:40px;background:linear-gradient(135deg,'+p.g[0]+','+p.g[1]+')">'+p.c+'</div>'+
+        '<div class="flex-1 min-w-0"><div style="font-weight:600;font-size:14px">'+p.n+'</div><div class="secondary" style="font-size:12px">'+p.d+'</div></div>'+
+        '<span class="badge badge-gray">'+p.t+'</span></div>'+
+        '<div class="flex justify-end gap-1 mt-3"><button class="btn btn-ghost btn-xs" onclick="piToast(\'预览 '+p.n+'\')">预览</button><button class="btn btn-primary btn-xs" onclick="piToast(\'已克隆 '+p.n+'\')">克隆</button></div></div>';
+    }
+    Object.keys(PACKS).forEach(function(k){
+      var el = document.getElementById('grid-'+k);
+      if (el) el.innerHTML = PACKS[k].map(renderPack).join('');
+    });
+  </script>
+</body>
+</html>

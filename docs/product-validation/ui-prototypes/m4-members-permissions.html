@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 成员与权限（RBAC）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .role-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;line-height:1.7;white-space:nowrap}
+    .role-owner{background:rgba(139,92,246,.15);color:#a78bfa}
+    .role-admin{background:rgba(6,182,212,.15);color:#22d3ee}
+    .role-developer{background:rgba(129,201,149,.15);color:#81c995}
+    .role-operator{background:rgba(251,191,36,.15);color:#fbbf24}
+    .role-auditor{background:rgba(244,114,182,.15);color:#f472b6}
+    .role-member{background:rgba(148,163,184,.13);color:#94a3b8}
+    .scope-tag{font-family:var(--font-mono);font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--bg-tertiary);color:var(--text-tertiary)}
+    .member-row{display:grid;grid-template-columns:minmax(200px,2fr) 150px 1.2fr 130px 100px 48px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border-color)}
+    .member-row:hover{background:var(--bg-hover)}
+    .member-head{display:grid;grid-template-columns:minmax(200px,2fr) 150px 1.2fr 130px 100px 48px;gap:12px;padding:10px 16px;font-size:11.5px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border-strong)}
+    .who{display:flex;align-items:center;gap:10px;min-width:0}
+    .who-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .who-mail{font-size:11.5px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .matrix-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}
+    .matrix-table th{position:sticky;top:0;background:var(--bg-secondary);z-index:2;padding:9px 8px;text-align:center;font-weight:600;color:var(--text-secondary);font-size:11px;border-bottom:1px solid var(--border-strong);white-space:nowrap}
+    .matrix-table th:first-child{text-align:left;position:sticky;left:0;z-index:3;min-width:150px}
+    .matrix-table td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--border-light)}
+    .matrix-table td:first-child{text-align:left;position:sticky;left:0;background:var(--bg-secondary);font-weight:500}
+    .matrix-table tr:hover td{background:var(--bg-hover)}
+    .matrix-table tr:hover td:first-child{background:var(--bg-hover)}
+    .cell-allow{color:var(--success-color);font-weight:600}
+    .cell-deny{color:var(--text-muted)}
+    .cell-cond{color:var(--warning-color);font-weight:600}
+    .dept-tree-line{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;transition:var(--transition-fast)}
+    .dept-tree-line:hover{background:var(--bg-hover)}
+    .dept-tree-line.active{background:var(--accent-light);color:var(--brand)}
+    .toggle{width:34px;height:19px;border-radius:999px;background:var(--bg-active);position:relative;cursor:pointer;transition:var(--transition-fast);flex-shrink:0}
+    .toggle.on{background:var(--brand)}
+    .toggle::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:var(--transition-fast)}
+    .toggle.on::after{transform:translateX(15px)}
+    @media(max-width:900px){.member-row,.member-head{grid-template-columns:1.5fr 120px 60px}.member-row>*:nth-child(3),.member-row>*:nth-child(4),.member-head>*:nth-child(3),.member-head>*:nth-child(4){display:none}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('打开邀请成员')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>邀请成员</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item active" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span><span class="badge badge-brand nav-badge">NEW</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span><span class="badge badge-error nav-badge">3</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.6.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索成员、角色、部门…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('打开角色配置')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>权限矩阵</button>
+        <button class="btn btn-primary btn-sm" onclick="piToast('打开邀请成员')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>邀请成员</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>治理与合规</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>成员与权限</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">成员与权限</h1>
+            <p class="page-subtitle">角色 × 资源 × 操作 三维授权 · 支持部门级数据隔离</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-brand">企业版</span>
+            <span class="badge badge-gray">12 人 · 5 部门</span>
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="card"><div class="secondary" style="font-size:12px">团队成员</div><div style="font-size:26px;font-weight:700;margin-top:4px">12</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">席位 10 / 已用 12</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">自定义角色</div><div style="font-size:26px;font-weight:700;margin-top:4px">2</div><span class="badge badge-success" style="display:inline-block;margin-top:4px">采用率 40%</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">权限判定 P99</div><div style="font-size:26px;font-weight:700;margin-top:4px">4.2ms</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">缓存命中 96.3%</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">越权拦截（30天）</div><div style="font-size:26px;font-weight:700;margin-top:4px">7</div><span class="badge badge-success" style="display:inline-block;margin-top:4px">↓ 正常范围</span></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <!-- 部门树 -->
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border-color)"><div style="font-size:13.5px;font-weight:600">部门结构</div><div class="secondary" style="font-size:11.5px;margin-top:2px">scope=team 的数据范围边界</div></div>
+            <div style="padding:8px">
+              <div class="dept-tree-line active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg><span>全部部门</span><span class="scope-tag" style="margin-left:auto">12</span></div>
+              <div class="dept-tree-line" style="padding-left:20px"><span style="color:var(--text-tertiary)">└</span><span>产品部</span><span class="scope-tag" style="margin-left:auto">4</span></div>
+              <div class="dept-tree-line" style="padding-left:38px"><span style="color:var(--text-tertiary)">└</span><span> Agent 组</span><span class="scope-tag" style="margin-left:auto">2</span></div>
+              <div class="dept-tree-line" style="padding-left:38px"><span style="color:var(--text-tertiary)">└</span><span> 增长组</span><span class="scope-tag" style="margin-left:auto">2</span></div>
+              <div class="dept-tree-line" style="padding-left:20px"><span style="color:var(--text-tertiary)">└</span><span>工程部</span><span class="scope-tag" style="margin-left:auto">5</span></div>
+              <div class="dept-tree-line" style="padding-left:38px"><span style="color:var(--text-tertiary)">└</span><span> 平台组</span><span class="scope-tag" style="margin-left:auto">3</span></div>
+              <div class="dept-tree-line" style="padding-left:38px"><span style="color:var(--text-tertiary)">└</span><span> 前端组</span><span class="scope-tag" style="margin-left:auto">2</span></div>
+              <div class="dept-tree-line" style="padding-left:20px"><span style="color:var(--text-tertiary)">└</span><span>财务部</span><span class="scope-tag" style="margin-left:auto">1</span></div>
+              <div class="dept-tree-line" style="padding-left:20px"><span style="color:var(--text-tertiary)">└</span><span>合规审计</span><span class="scope-tag" style="margin-left:auto">2</span></div>
+            </div>
+            <div style="padding:12px 16px;border-top:1px solid var(--border-color)">
+              <button class="btn btn-secondary btn-sm" style="width:100%" onclick="piToast('新建部门')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新建部门</button>
+            </div>
+          </div>
+
+          <!-- 成员列表 -->
+          <div class="card lg:col-span-3" style="padding:0;overflow:hidden">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="font-size:13.5px;font-weight:600">成员</div>
+              <div class="flex items-center gap-2" style="margin-left:auto;flex-wrap:wrap">
+                <select class="input" style="height:30px;font-size:12px;padding:0 8px;min-width:110px"><option>全部角色</option><option>owner</option><option>admin</option><option>developer</option><option>operator</option><option>auditor</option><option>member</option></select>
+                <select class="input" style="height:30px;font-size:12px;padding:0 8px;min-width:110px"><option>全部部门</option><option>产品部</option><option>工程部</option><option>财务部</option><option>合规审计</option></select>
+                <select class="input" style="height:30px;font-size:12px;padding:0 8px;min-width:100px"><option>全部状态</option><option>活跃</option><option>待接受邀请</option><option>已停用</option></select>
+              </div>
+            </div>
+            <div class="member-head">
+              <div>成员</div><div>角色</div><div>部门 / 数据范围</div><div>最近活跃</div><div>状态</div><div></div>
+            </div>
+
+            <div class="member-row">
+              <div class="who"><div class="avatar" style="width:32px;height:32px;font-size:12px">林</div><div style="min-width:0"><div class="who-name">林知遥</div><div class="who-mail">zhiyao@acme.com</div></div></div>
+              <div><span class="role-pill role-owner">owner</span></div>
+              <div><span class="scope-tag">全租户</span></div>
+              <div class="secondary" style="font-size:12px">2 分钟前</div>
+              <div><span class="badge badge-success">活跃</span></div>
+              <div><button class="icon-btn" onclick="piToast('所有者不可编辑')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+            </div>
+
+            <div class="member-row">
+              <div class="who"><div class="avatar" style="width:32px;height:32px;font-size:12px">陈</div><div style="min-width:0"><div class="who-name">陈牧</div><div class="who-mail">chenmu@acme.com</div></div></div>
+              <div><span class="role-pill role-admin">admin</span></div>
+              <div><span class="scope-tag">全租户</span></div>
+              <div class="secondary" style="font-size:12px">18 分钟前</div>
+              <div><span class="badge badge-success">活跃</span></div>
+              <div><button class="icon-btn" onclick="piToast('编辑成员权限')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+            </div>
+
+            <div class="member-row">
+              <div class="who"><div class="avatar" style="width:32px;height:32px;font-size:12px">苏</div><div style="min-width:0"><div class="who-name">苏黎</div><div class="who-mail">suli@acme.com</div></div></div>
+              <div><span class="role-pill role-developer">developer</span></div>
+              <div><span class="scope-tag">工程部 · team</span></div>
+              <div class="secondary" style="font-size:12px">1 小时前</div>
+              <div><span class="badge badge-success">活跃</span></div>
+              <div><button class="icon-btn" onclick="piToast('编辑成员权限')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+            </div>
+
+            <div class="member-row">
+              <div class="who"><div class="avatar" style="width:32px;height:32px;font-size:12px">何</div><div style="min-width:0"><div class="who-name">何夕</div><div class="who-mail">hexi@acme.com</div></div></div>
+              <div><span class="role-pill role-operator">operator</span></div>
+              <div><span class="scope-tag">工程部 · team</span></div>
+              <div class="secondary" style="font-size:12px">3 小时前</div>
+              <div><span class="badge badge-success">活跃</span></div>
+              <div><button class="icon-btn" onclick="piToast('编辑成员权限')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+            </div>
+
+            <div class="member-row">
+              <div class="who"><div class="avatar" style="width:32px;height:32px;font-size:12px">郑</div><div style="min-width:0"><div class="who-name">郑砚</div><div class="who-mail">zhengyan@acme.com</div></div></div>
+              <div><span class="role-pill role-auditor">auditor</span></div>
+              <div><span class="scope-tag">合规审计 · tenant</span></div>
+              <div class="secondary" style="font-size:12px">昨天</div>
+              <div><span class="badge badge-success">活跃</span></div>
+              <div><button class="icon-btn" onclick="piToast('编辑成员权限')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+            </div>
+
+            <div class="member-row">
+              <div class="who"><div class="avatar" style="width:32px;height:32px;font-size:12px">叶</div><div style="min-width:0"><div class="who-name">叶迟</div><div class="who-mail">yechi@acme.com</div></div></div>
+              <div><span class="role-pill role-member">member</span></div>
+              <div><span class="scope-tag">产品部 · own</span></div>
+              <div class="secondary" style="font-size:12px">2 天前</div>
+              <div><span class="badge badge-warning">待接受</span></div>
+              <div><button class="icon-btn" onclick="piToast('重发邀请')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+            </div>
+
+            <div class="member-row">
+              <div class="who"><div class="avatar" style="width:32px;height:32px;font-size:12px">秦</div><div style="min-width:0"><div class="who-name">秦望</div><div class="who-mail">qinwang@acme.com</div></div></div>
+              <div><span class="role-pill" style="background:rgba(251,146,60,.15);color:#fb923c">财务审阅员</span></div>
+              <div><span class="scope-tag">财务部 · tenant</span></div>
+              <div class="secondary" style="font-size:12px">3 天前</div>
+              <div><span class="badge badge-success">活跃</span></div>
+              <div><button class="icon-btn" onclick="piToast('编辑自定义角色')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div>
+            </div>
+
+            <div style="padding:12px 16px;display:flex;align-items:center;gap:10px">
+              <span class="secondary" style="font-size:12px">显示 7 / 12 位成员</span>
+              <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="piToast('加载更多')">加载更多</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 权限矩阵 -->
+        <div class="card" style="padding:0;overflow:hidden;margin-top:4px">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div><div style="font-size:13.5px;font-weight:600">权限矩阵</div><div class="secondary" style="font-size:11.5px;margin-top:2px">10 类资源 × 9 项操作 · 默认拒绝（zero-trust）</div></div>
+            <div class="flex items-center gap-3" style="margin-left:auto;font-size:11.5px">
+              <span style="color:var(--success-color)">● 允许</span>
+              <span style="color:var(--warning-color)">◐ 条件（scope）</span>
+              <span style="color:var(--text-muted)">○ 拒绝</span>
+            </div>
+          </div>
+          <div style="max-height:340px;overflow:auto">
+            <table class="matrix-table">
+              <thead><tr>
+                <th>资源 \ 角色</th><th>owner</th><th>admin</th><th>developer</th><th>operator</th><th>auditor</th><th>member</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>agent</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-cond">◐</td><td class="cell-deny">○</td><td class="cell-cond">◐ 只读</td><td class="cell-cond">◐ own</td></tr>
+                <tr><td>knowledge_base</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-cond">◐</td><td class="cell-deny">○</td><td class="cell-cond">◐ 只读</td><td class="cell-cond">◐ own</td></tr>
+                <tr><td>workflow</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-cond">◐</td><td class="cell-deny">○</td><td class="cell-cond">◐ 只读</td><td class="cell-cond">◐ own</td></tr>
+                <tr><td>template</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-cond">◐</td><td class="cell-deny">○</td><td class="cell-cond">◐ 只读</td><td class="cell-cond">◐ own</td></tr>
+                <tr><td>plugin</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-cond">◐</td><td class="cell-deny">○</td><td class="cell-cond">◐ 只读</td><td class="cell-deny">○</td></tr>
+                <tr><td>mcp_server</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-cond">◐</td><td class="cell-deny">○</td><td class="cell-cond">◐ 只读</td><td class="cell-deny">○</td></tr>
+                <tr><td>execution</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-cond">◐ 只读</td><td class="cell-cond">◐ 只读</td><td class="cell-cond">◐ own</td></tr>
+                <tr><td>billing</td><td class="cell-allow">●</td><td class="cell-deny">○</td><td class="cell-deny">○</td><td class="cell-deny">○</td><td class="cell-deny">○</td><td class="cell-deny">○</td></tr>
+                <tr><td>audit_log</td><td class="cell-allow">● 含导出</td><td class="cell-cond">◐ 只读+导出</td><td class="cell-deny">○</td><td class="cell-deny">○</td><td class="cell-allow">● 只读+导出</td><td class="cell-deny">○</td></tr>
+                <tr><td>settings</td><td class="cell-allow">●</td><td class="cell-allow">●</td><td class="cell-deny">○</td><td class="cell-deny">○</td><td class="cell-deny">○</td><td class="cell-deny">○</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border-color);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="secondary" style="font-size:11.5px">判定顺序：显式 DENY &gt; ALLOW + scope 匹配 &gt; 默认 deny</span>
+            <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="piToast('复制为自定义角色')">复制为自定义角色</button>
+          </div>
+        </div>
+
+        <!-- 兼容开关 -->
+        <div class="card" style="margin-top:4px">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:600">RBAC 兼容模式</div>
+              <div class="secondary" style="font-size:12px;margin-top:4px;line-height:1.6">迁移期内保留旧两档 role 行为（<code style="font-family:var(--font-mono);font-size:11px">user</code> 维持原权限），避免存量功能因默认拒绝而大面积不可用。开启期间所有判定会打告警日志，建议一个版本内关闭。</div>
+            </div>
+            <div class="toggle" id="legacyToggle"></div>
+          </div>
+          <div style="margin-top:12px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--warning-bg,rgba(251,191,36,.08));border:1px solid rgba(251,191,36,.2);font-size:12px;color:var(--warning-color)">
+            ⚠ 当前处于兼容模式，已有 <b>7 天</b>。旧 <code style="font-family:var(--font-mono);font-size:11px">user</code> 角色仍可访问全部非 deny 动作，RBAC 隔离未完全生效。
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script>
+    const t = document.getElementById('legacyToggle');
+    t.addEventListener('click', () => { t.classList.toggle('on'); piToast(t.classList.contains('on') ? '已关闭兼容模式（RBAC 全量生效）' : '已开启兼容模式（旧 role 行为）'); });
+  </script>
+</body>
+</html>

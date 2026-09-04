@@ -1,0 +1,15 @@
+import { openAICompletionsApi } from "../api/openai-completions.lazy.js";
+import { envApiKeyAuth } from "../auth/helpers.js";
+import { createProvider, type Provider } from "../models.js";
+import { STEPFUN_MODELS } from "./stepfun.models.js";
+
+export function stepfunProvider(): Provider<"openai-completions"> {
+  return createProvider({
+    id: "stepfun",
+    name: "StepFun",
+    baseUrl: "https://api.stepfun.com/step_plan/v1",
+    auth: { apiKey: envApiKeyAuth("StepFun API key", ["STEPFUN_API_KEY"]) },
+    models: Object.values(STEPFUN_MODELS.models),
+    api: openAICompletionsApi(),
+  });
+}

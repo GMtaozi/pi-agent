@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 用量统计</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .metric-card{padding:18px 20px;border-radius:var(--radius-lg);border:1px solid var(--border-color);background:var(--bg-secondary);position:relative;overflow:hidden}
+    .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--brand),var(--brand-cyan));opacity:0}
+    .metric-card:hover::before{opacity:1}
+    .metric-value{font-size:28px;font-weight:700;letter-spacing:-0.02em;line-height:1.2}
+    .metric-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+    .metric-delta{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px}
+    .delta-up{background:var(--error-bg);color:var(--error-color)}
+    .delta-down{background:var(--success-bg);color:var(--success-color)}
+    .delta-flat{background:var(--bg-tertiary);color:var(--text-tertiary)}
+    .quota-row{padding:13px 0;border-bottom:1px solid var(--border-light)}
+    .quota-row:last-child{border-bottom:none}
+    .quota-bar{height:7px;border-radius:999px;background:var(--bg-tertiary);overflow:hidden;margin-top:7px}
+    .quota-fill{height:100%;border-radius:999px;transition:width var(--transition-slow)}
+    .bar-ok{background:linear-gradient(90deg,var(--brand-cyan),var(--brand))}
+    .bar-warn{background:linear-gradient(90deg,var(--warning-color),#f59e0b)}
+    .bar-danger{background:linear-gradient(90deg,var(--error-color),#dc2626)}
+    .chart-area{height:180px;display:flex;align-items:flex-end;gap:4px;padding:12px 0}
+    .chart-bar{flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--brand),var(--brand-cyan));opacity:.7;transition:opacity var(--transition-fast);position:relative}
+    .chart-bar:hover{opacity:1}
+    .chart-bar:hover::after{content:attr(data-val);position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-size:10px;background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:4px;padding:2px 6px;white-space:nowrap}
+    .chart-labels{display:flex;gap:4px;padding:0 0 8px}
+    .chart-label{flex:1;text-align:center;font-size:10px;color:var(--text-tertiary)}
+    .rank-row{display:grid;grid-template-columns:22px 1fr 86px 70px;gap:10px;align-items:center;padding:8px 0;font-size:12.5px}
+    .rank-bar{height:5px;border-radius:999px;background:var(--brand);opacity:.8;margin-top:4px}
+    .filter-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid var(--border-color);background:var(--bg-tertiary);color:var(--text-secondary);cursor:pointer;transition:var(--transition-fast)}
+    .filter-chip:hover{border-color:var(--brand);color:var(--text-primary)}
+    .filter-chip.active{background:var(--accent-light);border-color:var(--brand);color:var(--brand)}
+    .tab-row{display:flex;gap:2px;border-bottom:1px solid var(--border-color);margin-bottom:20px}
+    .tab-item{padding:11px 14px;font-size:13px;font-weight:500;color:var(--text-tertiary);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:var(--transition-fast)}
+    .tab-item:hover{color:var(--text-secondary)}
+    .tab-item.active{color:var(--brand);border-bottom-color:var(--brand)}
+    .mono{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="location.href='m6-cloud-plans.html'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2z"/></svg><span>升级套餐</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <a class="nav-item" data-nav href="m6-solution-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span>行业方案</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="m6-cloud-subscription.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span>云端订阅</span></a>
+        <a class="nav-item active" data-nav href="m6-cloud-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span>用量统计</span><span class="badge badge-brand nav-badge">M6</span></a>
+        <a class="nav-item" data-nav href="m6-sso-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg><span>SSO 配置</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v3.0.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索用量明细、Agent、知识库…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <div class="flex items-center gap-2" style="font-size:12px;color:var(--text-secondary)"><span class="live-dot" style="width:7px;height:7px;border-radius:50%;background:var(--success-color);box-shadow:0 0 6px var(--success-color);animation:pulse 2s infinite"></span>实时</div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('导出用量报告')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>导出</button>
+        <button class="btn btn-primary btn-sm" onclick="location.href='m6-cloud-plans.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2z"/></svg>升级</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>商业化</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>用量统计</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">用量统计</h1>
+            <p class="page-subtitle">Token 消耗 · Agent 数量 · 存储用量 · 配额进度</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="badge badge-brand">企业版</span>
+            <span class="badge badge-gray">周期 09/01 – 09/30</span>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="metric-card">
+            <div class="metric-label">本月 Token 消耗</div>
+            <div class="metric-value">8.21M</div>
+            <div class="metric-delta delta-up" style="margin-top:6px">↑ 12.3% vs 上月</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">活跃 Agent 数</div>
+            <div class="metric-value">18</div>
+            <div class="metric-delta delta-flat" style="margin-top:6px">+2 本周新增</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">知识库存储</div>
+            <div class="metric-value">14.2<span style="font-size:16px;color:var(--text-tertiary)"> GB</span></div>
+            <div class="metric-delta delta-down" style="margin-top:6px">↓ 3.1% vs 上月</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">API 调用次数</div>
+            <div class="metric-value">245K</div>
+            <div class="metric-delta delta-up" style="margin-top:6px">↑ 8.7% vs 上月</div>
+          </div>
+        </div>
+
+        <!-- Token Trend Chart -->
+        <div class="card mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <div class="card-title">Token 消耗趋势</div>
+            <div class="flex gap-2">
+              <span class="filter-chip active">7天</span>
+              <span class="filter-chip">30天</span>
+              <span class="filter-chip">90天</span>
+            </div>
+          </div>
+          <div class="chart-area">
+            <div class="chart-bar" style="height:45%" data-val="320K"></div>
+            <div class="chart-bar" style="height:62%" data-val="450K"></div>
+            <div class="chart-bar" style="height:58%" data-val="420K"></div>
+            <div class="chart-bar" style="height:78%" data-val="580K"></div>
+            <div class="chart-bar" style="height:65%" data-val="480K"></div>
+            <div class="chart-bar" style="height:88%" data-val="650K"></div>
+            <div class="chart-bar" style="height:72%" data-val="530K"></div>
+            <div class="chart-bar" style="height:95%" data-val="720K"></div>
+            <div class="chart-bar" style="height:82%" data-val="610K"></div>
+            <div class="chart-bar" style="height:100%" data-val="760K"></div>
+            <div class="chart-bar" style="height:90%" data-val="680K"></div>
+            <div class="chart-bar" style="height:85%" data-val="640K"></div>
+          </div>
+          <div class="chart-labels">
+            <div class="chart-label">8/22</div><div class="chart-label">8/24</div><div class="chart-label">8/26</div><div class="chart-label">8/28</div><div class="chart-label">8/30</div><div class="chart-label">9/01</div><div class="chart-label">9/03</div><div class="chart-label">9/05</div><div class="chart-label">9/07</div><div class="chart-label">9/09</div><div class="chart-label">9/11</div><div class="chart-label">9/13</div>
+          </div>
+        </div>
+
+        <!-- Quota + Top Agents -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div style="font-size:13.5px;font-weight:600">配额使用情况</div><span class="badge badge-warning" style="margin-left:auto">1 项已预警</span></div>
+            <div class="secondary" style="font-size:11.5px;margin-bottom:12px">80% 预警 · 100% 软限流 · 120% 硬限流</div>
+            <div class="quota-row">
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:500">Token</span><span class="mono" style="margin-left:auto;color:var(--warning-color);font-weight:600">8.21M / 10M · 82%</span></div>
+              <div class="quota-bar"><div class="quota-fill bar-warn" style="width:82%"></div></div>
+            </div>
+            <div class="quota-row">
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:500">月度成本</span><span class="mono" style="margin-left:auto">¥6,371 / ¥12,000 · 53%</span></div>
+              <div class="quota-bar"><div class="quota-fill bar-ok" style="width:53%"></div></div>
+            </div>
+            <div class="quota-row">
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:500">知识库存储</span><span class="mono" style="margin-left:auto">14.2 GB / 100 GB · 14%</span></div>
+              <div class="quota-bar"><div class="quota-fill bar-ok" style="width:14%"></div></div>
+            </div>
+            <div class="quota-row">
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:13px;font-weight:500">Agent 数</span><span class="mono" style="margin-left:auto">18 / 不限</span></div>
+              <div class="quota-bar"><div class="quota-fill bar-ok" style="width:18%"></div></div>
+            </div>
+            <div style="margin-top:12px;padding:10px 12px;border-radius:var(--radius-sm);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);font-size:12px;color:var(--warning-color);line-height:1.6">
+              ⚠ Token 用量已达 82%，预计 <b>09/26</b> 触达配额上限。建议升级套餐或调整配额策略。
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:12px">Agent 用量排行</div>
+            <div class="rank-row"><div style="color:var(--text-tertiary)">1</div><div style="font-size:12.5px">金融合规客服</div><div class="mono" style="text-align:right">2.4M</div><div class="rank-bar" style="width:100%"></div></div>
+            <div class="rank-row"><div style="color:var(--text-tertiary)">2</div><div style="font-size:12.5px">智能工单助手</div><div class="mono" style="text-align:right">1.8M</div><div class="rank-bar" style="width:75%"></div></div>
+            <div class="rank-row"><div style="color:var(--text-tertiary)">3</div><div style="font-size:12.5px">风险预警分析</div><div class="mono" style="text-align:right">1.2M</div><div class="rank-bar" style="width:50%"></div></div>
+            <div class="rank-row"><div style="color:var(--text-tertiary)">4</div><div style="font-size:12.5px">BI 智能分析师</div><div class="mono" style="text-align:right">890K</div><div class="rank-bar" style="width:37%"></div></div>
+            <div class="rank-row"><div style="color:var(--text-tertiary)">5</div><div style="font-size:12.5px">代码评审专家</div><div class="mono" style="text-align:right">650K</div><div class="rank-bar" style="width:27%"></div></div>
+          </div>
+        </div>
+
+        <!-- Storage Breakdown -->
+        <div class="card">
+          <div class="card-title mb-3">存储用量明细</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="preview-panel" style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">
+              <div class="flex items-center gap-2 mb-2"><div class="agent-ico" style="width:32px;height:32px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);font-size:14px">📚</div><span style="font-size:13px;font-weight:500">知识库</span></div>
+              <div style="font-size:20px;font-weight:700">8.5 GB</div>
+              <div class="secondary" style="font-size:11px;margin-top:2px">占总存储 60%</div>
+            </div>
+            <div class="preview-panel" style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">
+              <div class="flex items-center gap-2 mb-2"><div class="agent-ico" style="width:32px;height:32px;background:linear-gradient(135deg,#10b981,#06b6d4);font-size:14px">📝</div><span style="font-size:13px;font-weight:500">会话日志</span></div>
+              <div style="font-size:20px;font-weight:700">3.2 GB</div>
+              <div class="secondary" style="font-size:11px;margin-top:2px">占总存储 23%</div>
+            </div>
+            <div class="preview-panel" style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">
+              <div class="flex items-center gap-2 mb-2"><div class="agent-ico" style="width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#8b5cf6);font-size:14px">📎</div><span style="font-size:13px;font-weight:500">附件/文件</span></div>
+              <div style="font-size:20px;font-weight:700">2.5 GB</div>
+              <div class="secondary" style="font-size:11px;margin-top:2px">占总存储 17%</div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

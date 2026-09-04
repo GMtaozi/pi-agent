@@ -1,0 +1,1 @@
+{"version":3,"file":"stream-fn.js","sourceRoot":"","sources":["stream-fn.ts"],"names":[],"mappings":"AAEA,IAAI,eAAqC,CAAC;AAE1C;;;;;GAKG;AACH,MAAM,UAAU,kBAAkB,CAAC,QAA8B;IAChE,eAAe,GAAG,QAAQ,CAAC;AAC5B,CAAC;AAED,MAAM,UAAU,kBAAkB;IACjC,IAAI,CAAC,eAAe,EAAE,CAAC;QACtB,MAAM,IAAI,KAAK,CAAC,+FAA+F,CAAC,CAAC;IAClH,CAAC;IACD,OAAO,eAAe,CAAC;AACxB,CAAC"}

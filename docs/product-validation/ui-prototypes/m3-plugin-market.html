@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 插件市场</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .star { width:14px;height:14px; }
+    .plg-card { transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast); }
+    .plg-card:hover { border-color: var(--border-strong); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .chip { padding:6px 14px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-secondary);transition:var(--transition-fast); }
+    .chip:hover { color:var(--text-primary);border-color:var(--border-strong); }
+    .chip.active { background:var(--brand);border-color:var(--brand);color:#fff; }
+    .verified { color: var(--info-color); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('打开发布插件向导')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>提交插件</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item active" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span><span class="badge badge-brand nav-badge">NEW</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+        <div class="nav-section-label">对话</div>
+        <a class="nav-item" data-nav href="chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg><span>对话调试</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.5.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索插件、发布者、能力…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>扩展生态</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>插件市场</span></div>
+        <div class="page-head"><div><h1 class="page-title">插件市场</h1><p class="page-subtitle">326 个已认证插件 · 扩展 Agent 的工具、连接器与触发器</p></div></div>
+
+        <!-- Featured -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="card plg-card" style="background:linear-gradient(135deg,var(--accent-light),transparent);border-color:var(--brand)">
+            <div class="flex items-center gap-2 mb-2"><span class="badge badge-brand">🔥 本周精选</span><span class="badge badge-gray">官方</span></div>
+            <div class="flex items-center gap-3"><div class="agent-ico" style="width:44px;height:44px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div><div><div style="font-weight:600;font-size:15px">定时任务调度器</div><div class="secondary" style="font-size:12px">Cron 触发器 · 可视化编排</div></div></div>
+            <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.9 · 31.2k 安装</span><button class="btn btn-primary btn-xs" onclick="piToast('正在安装：定时任务调度器')">安装</button></div>
+          </div>
+          <div class="card plg-card" style="background:linear-gradient(135deg,var(--accent-cyan-light),transparent)">
+            <div class="flex items-center gap-2 mb-2"><span class="badge badge-cyan">热门</span><span class="badge badge-gray">官方</span></div>
+            <div class="flex items-center gap-3"><div class="agent-ico" style="width:44px;height:44px;background:linear-gradient(135deg,#06b6d4,#3b82f6)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H4z"/><path d="M2 20h20"/></svg></div><div><div style="font-weight:600;font-size:15px">飞书连接器</div><div class="secondary" style="font-size:12px">消息推送 · 群机器人 · 审批</div></div></div>
+            <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.7 · 18.6k 安装</span><button class="btn btn-secondary btn-xs" onclick="piToast('飞书连接器已安装')">已安装</button></div>
+          </div>
+          <div class="card plg-card">
+            <div class="flex items-center gap-2 mb-2"><span class="badge badge-warning">新人推荐</span></div>
+            <div class="flex items-center gap-3"><div class="agent-ico" style="width:44px;height:44px;background:linear-gradient(135deg,#f59e0b,#8b5cf6)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg></div><div><div style="font-weight:600;font-size:15px">网页抓取器</div><div class="secondary" style="font-size:12px">结构化提取 · 反爬绕过</div></div></div>
+            <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.8 · 23.1k 安装</span><button class="btn btn-primary btn-xs" onclick="piToast('正在安装：网页抓取器')">安装</button></div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div class="flex flex-wrap gap-2" id="catChips">
+            <span class="chip active" onclick="toggleChip(this)">全部</span>
+            <span class="chip" onclick="toggleChip(this)">工具</span>
+            <span class="chip" onclick="toggleChip(this)">连接器</span>
+            <span class="chip" onclick="toggleChip(this)">触发器</span>
+            <span class="chip" onclick="toggleChip(this)">模型</span>
+            <span class="chip" onclick="toggleChip(this)">数据源</span>
+          </div>
+          <div class="flex gap-2">
+            <div class="segmented" data-seg-group>
+              <button class="seg-btn active" data-seg>推荐</button>
+              <button class="seg-btn" data-seg>已安装</button>
+              <button class="seg-btn" data-seg>可更新</button>
+            </div>
+            <select class="select" style="width:auto"><option>最热</option><option>最新</option><option>评分最高</option><option>下载最多</option></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <!-- Grid -->
+          <div class="lg:col-span-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="plgGrid">
+              <!-- card: installed -->
+              <div class="card plg-card">
+                <div class="flex items-start justify-between">
+                  <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div>
+                  <button class="icon-btn btn-xs fav" onclick="toggleFav(this)" style="width:28px;height:28px"><svg class="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21l-1.5-1.4C5 14.5 2 11.9 2 8.5 2 6 4 4 6.5 4c1.7 0 3.4.9 4.5 2.3C12.1 4.9 13.8 4 15.5 4 18 4 20 6 20 8.5c0 3.4-3 6-8.5 11.1L12 21z"/></svg></button>
+                </div>
+                <div style="font-weight:600;margin-top:10px">GitHub 同步</div>
+                <div class="secondary" style="font-size:12px;margin-top:2px">PR/Issue 双向同步 · 自动标签</div>
+                <div class="flex items-center gap-2 mt-2"><span class="badge badge-gray">连接器</span><span class="badge badge-gray">社区</span></div>
+                <div class="flex items-center justify-between mt-3">
+                  <span class="secondary" style="font-size:12px">★ 4.6 · 12.4k</span>
+                  <div class="flex gap-1">
+                    <button class="btn btn-ghost btn-xs" onclick="piToast('查看插件详情')">详情</button>
+                    <button class="btn btn-secondary btn-xs installed" onclick="toggleInstall(this)">已安装</button>
+                  </div>
+                </div>
+              </div>
+              <!-- card: not installed -->
+              <div class="card plg-card">
+                <div class="flex items-start justify-between">
+                  <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#10b981,#06b6d4)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></div>
+                  <button class="icon-btn btn-xs fav" onclick="toggleFav(this)" style="width:28px;height:28px"><svg class="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21l-1.5-1.4C5 14.5 2 11.9 2 8.5 2 6 4 4 6.5 4c1.7 0 3.4.9 4.5 2.3C12.1 4.9 13.8 4 15.5 4 18 4 20 6 20 8.5c0 3.4-3 6-8.5 11.1L12 21z"/></svg></button>
+                </div>
+                <div style="font-weight:600;margin-top:10px">PDF 智能解析</div>
+                <div class="secondary" style="font-size:12px;margin-top:2px">表格/表单抽取 · OCR 增强</div>
+                <div class="flex items-center gap-2 mt-2"><span class="badge badge-gray">工具</span><span class="badge badge-gray">社区</span></div>
+                <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.5 · 9.8k</span><div class="flex gap-1"><button class="btn btn-ghost btn-xs" onclick="piToast('查看插件详情')">详情</button><button class="btn btn-primary btn-xs" onclick="toggleInstall(this)">安装</button></div></div>
+              </div>
+              <!-- card: installed -->
+              <div class="card plg-card">
+                <div class="flex items-start justify-between">
+                  <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#8b5cf6)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6v6H9z"/></svg></div>
+                  <button class="icon-btn btn-xs fav" onclick="toggleFav(this)" style="width:28px;height:28px"><svg class="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21l-1.5-1.4C5 14.5 2 11.9 2 8.5 2 6 4 4 6.5 4c1.7 0 3.4.9 4.5 2.3C12.1 4.9 13.8 4 15.5 4 18 4 20 6 20 8.5c0 3.4-3 6-8.5 11.1L12 21z"/></svg></button>
+                </div>
+                <div style="font-weight:600;margin-top:10px">本地模型推理</div>
+                <div class="secondary" style="font-size:12px;margin-top:2px">Ollama 接入 · 离线私有部署</div>
+                <div class="flex items-center gap-2 mt-2"><span class="badge badge-gray">模型</span><span class="badge badge-gray">社区</span></div>
+                <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.4 · 7.2k</span><div class="flex gap-1"><button class="btn btn-ghost btn-xs" onclick="piToast('查看插件详情')">详情</button><button class="btn btn-secondary btn-xs installed" onclick="toggleInstall(this)">已安装</button></div></div>
+              </div>
+              <!-- card: update available -->
+              <div class="card plg-card" style="border-color:var(--brand)">
+                <div class="flex items-start justify-between">
+                  <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#06b6d4,#3b82f6)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/></svg></div>
+                  <button class="icon-btn btn-xs fav" onclick="toggleFav(this)" style="width:28px;height:28px"><svg class="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21l-1.5-1.4C5 14.5 2 11.9 2 8.5 2 6 4 4 6.5 4c1.7 0 3.4.9 4.5 2.3C12.1 4.9 13.8 4 15.5 4 18 4 20 6 20 8.5c0 3.4-3 6-8.5 11.1L12 21z"/></svg></button>
+                </div>
+                <div style="font-weight:600;margin-top:10px">Notion 数据源</div>
+                <div class="secondary" style="font-size:12px;margin-top:2px">页面/数据库同步 · 增量更新</div>
+                <div class="flex items-center gap-2 mt-2"><span class="badge badge-gray">数据源</span><span class="badge badge-brand">可更新</span></div>
+                <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.7 · 11.5k</span><div class="flex gap-1"><button class="btn btn-ghost btn-xs" onclick="piToast('查看插件详情')">详情</button><button class="btn btn-primary btn-xs" onclick="piToast('正在更新 Notion 数据源')">更新</button></div></div>
+              </div>
+              <!-- card: installed -->
+              <div class="card plg-card">
+                <div class="flex items-start justify-between">
+                  <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#ec4899,#8b5cf6)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H4z"/><path d="M22 6l-4 3M2 6l4 3"/></svg></div>
+                  <button class="icon-btn btn-xs fav" onclick="toggleFav(this)" style="width:28px;height:28px"><svg class="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21l-1.5-1.4C5 14.5 2 11.9 2 8.5 2 6 4 4 6.5 4c1.7 0 3.4.9 4.5 2.3C12.1 4.9 13.8 4 15.5 4 18 4 20 6 20 8.5c0 3.4-3 6-8.5 11.1L12 21z"/></svg></button>
+                </div>
+                <div style="font-weight:600;margin-top:10px">邮件触发器</div>
+                <div class="secondary" style="font-size:12px;margin-top:2px">IMAP 监听 · 关键词自动启动</div>
+                <div class="flex items-center gap-2 mt-2"><span class="badge badge-gray">触发器</span><span class="badge badge-gray">社区</span></div>
+                <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.3 · 5.1k</span><div class="flex gap-1"><button class="btn btn-ghost btn-xs" onclick="piToast('查看插件详情')">详情</button><button class="btn btn-secondary btn-xs installed" onclick="toggleInstall(this)">已安装</button></div></div>
+              </div>
+              <!-- card: not installed -->
+              <div class="card plg-card">
+                <div class="flex items-start justify-between">
+                  <div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#3b82f6,#8b5cf6)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M2 12h20M12 2c3 3 3 17 0 20M12 2c-3 3-3 17 0 20"/></svg></div>
+                  <button class="icon-btn btn-xs fav" onclick="toggleFav(this)" style="width:28px;height:28px"><svg class="star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21l-1.5-1.4C5 14.5 2 11.9 2 8.5 2 6 4 4 6.5 4c1.7 0 3.4.9 4.5 2.3C12.1 4.9 13.8 4 15.5 4 18 4 20 6 20 8.5c0 3.4-3 6-8.5 11.1L12 21z"/></svg></button>
+                </div>
+                <div style="font-weight:600;margin-top:10px">Slack 连接器</div>
+                <div class="secondary" style="font-size:12px;margin-top:2px">频道消息 · 斜杠命令 · 文件</div>
+                <div class="flex items-center gap-2 mt-2"><span class="badge badge-gray">连接器</span><span class="badge badge-gray">官方</span></div>
+                <div class="flex items-center justify-between mt-3"><span class="secondary" style="font-size:12px">★ 4.6 · 14.9k</span><div class="flex gap-1"><button class="btn btn-ghost btn-xs" onclick="piToast('查看插件详情')">详情</button><button class="btn btn-primary btn-xs" onclick="toggleInstall(this)">安装</button></div></div>
+              </div>
+            </div>
+            <div class="flex justify-center mt-4"><button class="btn btn-secondary" onclick="piToast('加载更多插件')">加载更多</button></div>
+          </div>
+
+          <!-- Right rail -->
+          <div class="flex flex-col gap-4">
+            <div class="card">
+              <div class="card-head"><div class="card-title" style="font-size:14px">🔥 下载榜</div></div>
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-3 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span style="font-weight:700;color:var(--brand);width:18px">1</span><div class="agent-ico" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#f59e0b,#8b5cf6)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4"/></svg></div><div class="flex-1 min-w-0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">定时任务调度器</div></div><span class="secondary" style="font-size:11px">31.2k</span></div>
+                <div class="flex items-center gap-3 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span style="font-weight:700;color:var(--brand);width:18px">2</span><div class="agent-ico" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div><div class="flex-1 min-w-0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">网页抓取器</div></div><span class="secondary" style="font-size:11px">23.1k</span></div>
+                <div class="flex items-center gap-3 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span style="font-weight:700;color:var(--brand);width:18px">3</span><div class="agent-ico" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#06b6d4,#3b82f6)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H4z"/></svg></div><div class="flex-1 min-w-0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">飞书连接器</div></div><span class="secondary" style="font-size:11px">18.6k</span></div>
+                <div class="flex items-center gap-3 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span style="font-weight:700;width:18px;color:var(--text-tertiary)">4</span><div class="agent-ico" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#3b82f6,#8b5cf6)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg></div><div class="flex-1 min-w-0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Slack 连接器</div></div><span class="secondary" style="font-size:11px">14.9k</span></div>
+                <div class="flex items-center gap-3 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span style="font-weight:700;width:18px;color:var(--text-tertiary)">5</span><div class="agent-ico" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4"/></svg></div><div class="flex-1 min-w-0"><div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">GitHub 同步</div></div><span class="secondary" style="font-size:11px">12.4k</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title mb-3" style="font-size:14px">我的插件 <span class="badge badge-gray" style="margin-left:6px">12</span></div>
+              <div class="flex flex-col gap-2">
+                <div class="flex items-center justify-between p-2 rounded-lg" style="border:1px solid var(--border-color)"><div class="flex items-center gap-2"><span class="status-dot green"></span><span style="font-size:13px">飞书连接器</span></div><span class="secondary" style="font-size:11px">v2.3</span></div>
+                <div class="flex items-center justify-between p-2 rounded-lg" style="border:1px solid var(--border-color)"><div class="flex items-center gap-2"><span class="status-dot green"></span><span style="font-size:13px">GitHub 同步</span></div><span class="secondary" style="font-size:11px">v1.8</span></div>
+                <div class="flex items-center justify-between p-2 rounded-lg" style="border:1px solid var(--border-color)"><div class="flex items-center gap-2"><span class="status-dot green"></span><span style="font-size:13px">本地模型推理</span></div><span class="secondary" style="font-size:11px">v0.9</span></div>
+                <div class="flex items-center justify-between p-2 rounded-lg" style="border:1px solid var(--border-color)"><div class="flex items-center gap-2"><span class="status-dot amber"></span><span style="font-size:13px">Notion 数据源</span></div><span class="secondary" style="font-size:11px">可更新</span></div>
+              </div>
+              <button class="btn btn-secondary btn-sm w-full mt-3" style="width:100%" onclick="piToast('打开已安装管理')">管理已安装</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="share-modal.js"></script>
+  <script>
+    function toggleChip(el){ var g=el.parentElement; g.querySelectorAll('.chip').forEach(function(c){c.classList.remove('active')}); el.classList.add('active'); piToast('筛选：'+el.textContent); }
+    function toggleFav(btn){ var p=btn.querySelector('svg'); var on=p.getAttribute('fill')==='var(--brand)'||p.getAttribute('fill')==='#8b5cf6'; if(on){ p.setAttribute('fill','none'); p.setAttribute('stroke','currentColor'); piToast('已取消收藏'); } else { p.setAttribute('fill','var(--brand)'); p.setAttribute('stroke','var(--brand)'); piToast('已加入收藏'); } }
+    function toggleInstall(btn){ if(btn.classList.contains('installed')){ btn.classList.remove('installed','btn-secondary'); btn.classList.add('btn-primary'); btn.textContent='安装'; piToast('已卸载插件'); } else { btn.classList.remove('btn-primary'); btn.classList.add('installed','btn-secondary'); btn.textContent='已安装'; piToast('插件安装成功'); } }
+  </script>
+</body>
+</html>

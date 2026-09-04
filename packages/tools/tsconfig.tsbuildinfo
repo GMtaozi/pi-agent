@@ -1,0 +1,1 @@
+{"root":["./src/analyze-image-tool.ts","./src/base-tool.ts","./src/edit-file-tool.ts","./src/generate-audio-tool.ts","./src/generate-image-tool.ts","./src/generate-video-tool.ts","./src/index.ts","./src/read-file-tool.ts","./src/transcribe-audio-tool.ts","./src/workspace-tools.ts","./src/write-file-tool.ts"],"errors":true,"version":"6.0.3"}

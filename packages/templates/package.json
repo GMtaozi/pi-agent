@@ -1,0 +1,17 @@
+{
+  "name": "@workforge/templates",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {},
+  "devDependencies": {
+    "vitest": "^4.1.9"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc -p tsconfig.build.json --noEmit",
+    "test": "vitest run"
+  }
+}

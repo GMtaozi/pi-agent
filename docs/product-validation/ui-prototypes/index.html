@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · UI 原型 · Design Tokens</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+</head>
+<body style="background:var(--bg-primary)">
+  <div class="content" style="max-width:1180px;margin:0 auto">
+
+    <!-- Hero -->
+    <div class="page-head" style="margin-top:8px">
+      <div>
+        <div class="flex items-center gap-3"><div class="brand-logo" style="width:40px;height:40px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><h1 class="page-title">pi-agent Design System</h1></div>
+        <p class="page-subtitle">企业级 AI Agent 平台 · 高保真 UI 原型 · 基于 Tailwind + CSS 变量主题</p>
+      </div>
+      <button class="btn btn-secondary" data-theme-toggle>切换暗/亮色</button>
+    </div>
+
+    <!-- Prototype gallery -->
+    <h2 class="card-title" style="margin:8px 0 12px">原型页面（8）</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a class="card card-hover" href="dashboard.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div><div style="font-weight:600;margin-top:10px">Dashboard 首页</div><div class="secondary" style="font-size:12px">概览 · 最近 Agent</div></a>
+      <a class="card card-hover" href="agent-create.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div><div style="font-weight:600;margin-top:10px">Agent 创建</div><div class="secondary" style="font-size:12px">三步流程 · 模板</div></a>
+      <a class="card card-hover" href="agents.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg></div><div style="font-weight:600;margin-top:10px">Agent 列表</div><div class="secondary" style="font-size:12px">卡片/列表 · 批量</div></a>
+      <a class="card card-hover" href="chat.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg></div><div style="font-weight:600;margin-top:10px">对话调试</div><div class="secondary" style="font-size:12px">流式 · 历史 · Trace</div></a>
+      <a class="card card-hover" href="workflow.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 013 3v6"/></svg></div><div style="font-weight:600;margin-top:10px">工作流编辑器</div><div class="secondary" style="font-size:12px">画布 · 节点 · 配置</div></a>
+      <a class="card card-hover" href="knowledge.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/></svg></div><div style="font-weight:600;margin-top:10px">知识库管理</div><div class="secondary" style="font-size:12px">上传 · 状态 · 切片</div></a>
+      <a class="card card-hover" href="monitor.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><div style="font-weight:600;margin-top:10px">监控面板</div><div class="secondary" style="font-size:12px">KPI · 图表 · 告警</div></a>
+      <a class="card card-hover" href="notifications.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></div><div style="font-weight:600;margin-top:10px">通知中心</div><div class="secondary" style="font-size:12px">列表 · 告警规则</div></a>
+    </div>
+
+    <!-- M2 原型 -->
+    <h2 class="card-title" style="margin:32px 0 12px">M2 · 模板市场 &amp; RAG 增强（4）</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a class="card card-hover" href="m2-template-market.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></div><div style="font-weight:600;margin-top:10px">模板市场</div><div class="secondary" style="font-size:12px">分类 · 评分 · 一键使用</div></a>
+      <a class="card card-hover" href="m2-knowledge-enhance.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg></div><div style="font-weight:600;margin-top:10px">RAG 增强配置</div><div class="secondary" style="font-size:12px">切片 · 检索 · 重排</div></a>
+      <a class="card card-hover" href="m2-industry-pack.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><div style="font-weight:600;margin-top:10px">行业方案包</div><div class="secondary" style="font-size:12px">预置 · 一键部署</div></a>
+      <a class="card card-hover" href="m2-share-modal.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></div><div style="font-weight:600;margin-top:10px">分享弹窗</div><div class="secondary" style="font-size:12px">链接 · 权限 · 有效期</div></a>
+    </div>
+
+    <!-- M3 原型 -->
+    <h2 class="card-title" style="margin:32px 0 12px">M3 · 插件市场 &amp; MCP 生态（4）</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a class="card card-hover" href="m3-plugin-market.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg></div><div style="font-weight:600;margin-top:10px">插件市场</div><div class="secondary" style="font-size:12px">分类 · 认证 · 安装量</div></a>
+      <a class="card card-hover" href="m3-plugin-detail.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><div style="font-weight:600;margin-top:10px">插件详情</div><div class="secondary" style="font-size:12px">版本史 · 权限声明</div></a>
+      <a class="card card-hover" href="m3-mcp-config.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div><div style="font-weight:600;margin-top:10px">MCP 接入</div><div class="secondary" style="font-size:12px">stdio/http · 工具发现</div></a>
+      <a class="card card-hover" href="m3-developer-center.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div><div style="font-weight:600;margin-top:10px">开发者中心</div><div class="secondary" style="font-size:12px">提交 · 审核 · 版本</div></a>
+    </div>
+
+    <!-- M4 原型 -->
+    <h2 class="card-title" style="margin:32px 0 12px">M4 · 协作增强 &amp; 商业化（4）</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a class="card card-hover" href="m4-members-permissions.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div style="font-weight:600;margin-top:10px">成员与权限</div><div class="secondary" style="font-size:12px">RBAC · 部门 · 权限矩阵</div></a>
+      <a class="card card-hover" href="m4-approval-center.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div style="font-weight:600;margin-top:10px">审批中心</div><div class="secondary" style="font-size:12px">审批链 · SLA · 双签</div></a>
+      <a class="card card-hover" href="m4-audit-logs.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg></div><div style="font-weight:600;margin-top:10px">审计日志</div><div class="secondary" style="font-size:12px">哈希链 · 合规报告</div></a>
+      <a class="card card-hover" href="m4-billing-usage.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></div><div style="font-weight:600;margin-top:10px">用量与账单</div><div class="secondary" style="font-size:12px">配额 · 成本下钻 · License</div></a>
+    </div>
+
+    <!-- M5 原型 -->
+    <h2 class="card-title" style="margin:32px 0 12px">M5 · 可观测性 &amp; AI 网关（7）</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a class="card card-hover" href="m5-observability-dashboard.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><div style="font-weight:600;margin-top:10px">可观测性仪表盘</div><div class="secondary" style="font-size:12px">会话 · 指标 · 调用链</div></a>
+      <a class="card card-hover" href="m5-trace-viewer.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h4a3 3 0 013 3v6"/></svg></div><div style="font-weight:600;margin-top:10px">调用链追踪</div><div class="secondary" style="font-size:12px">拓扑 · Span · 时间线</div></a>
+      <a class="card card-hover" href="m5-anomaly-list.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div><div style="font-weight:600;margin-top:10px">异常列表</div><div class="secondary" style="font-size:12px">严重程度 · 类型 · 解决</div></a>
+      <a class="card card-hover" href="m5-gateway-config.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/></svg></div><div style="font-weight:600;margin-top:10px">AI 网关配置</div><div class="secondary" style="font-size:12px">路由规则 · 优先级</div></a>
+      <a class="card card-hover" href="m5-gateway-metrics.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div><div style="font-weight:600;margin-top:10px">网关指标</div><div class="secondary" style="font-size:12px">成本节省 · 分布</div></a>
+      <a class="card card-hover" href="m5-eval-dataset.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg></div><div style="font-weight:600;margin-top:10px">评测数据集</div><div class="secondary" style="font-size:12px">管理 · 创建 · 运行</div></a>
+      <a class="card card-hover" href="m5-eval-run.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div style="font-weight:600;margin-top:10px">评测执行</div><div class="secondary" style="font-size:12px">进度 · 评分 · 结果</div></a>
+    </div>
+
+    <!-- M6 原型 -->
+    <h2 class="card-title" style="margin:32px 0 12px">M6 · 行业方案 &amp; 云端托管（7）</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a class="card card-hover" href="m6-solution-market.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><div style="font-weight:600;margin-top:10px">行业方案市场</div><div class="secondary" style="font-size:12px">金融 · 医疗 · 教育</div></a>
+      <a class="card card-hover" href="m6-solution-detail.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg></div><div style="font-weight:600;margin-top:10px">方案详情</div><div class="secondary" style="font-size:12px">组件 · 部署</div></a>
+      <a class="card card-hover" href="m6-solution-create.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div><div style="font-weight:600;margin-top:10px">创建方案</div><div class="secondary" style="font-size:12px">配置 · 组件选择</div></a>
+      <a class="card card-hover" href="m6-cloud-subscription.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></div><div style="font-weight:600;margin-top:10px">云端订阅</div><div class="secondary" style="font-size:12px">套餐 · 升降级</div></a>
+      <a class="card card-hover" href="m6-cloud-usage.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><div style="font-weight:600;margin-top:10px">用量统计</div><div class="secondary" style="font-size:12px">Token · Agent · 存储</div></a>
+      <a class="card card-hover" href="m6-cloud-plans.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2z"/></svg></div><div style="font-weight:600;margin-top:10px">套餐对比</div><div class="secondary" style="font-size:12px">三档 · 功能差异</div></a>
+      <a class="card card-hover" href="m6-sso-config.html" style="text-decoration:none"><div class="agent-ico" style="background:linear-gradient(135deg,var(--brand),var(--brand-cyan))"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div><div style="font-weight:600;margin-top:10px">SSO 配置</div><div class="secondary" style="font-size:12px">SAML · OIDC · 多Provider</div></a>
+    </div>
+
+    <!-- DESIGN TOKENS -->
+    <h2 class="card-title" style="margin:32px 0 12px">Design Tokens</h2>
+
+    <!-- Color -->
+    <div class="card mb-4">
+      <div class="card-title mb-3">色彩 Color</div>
+      <div class="secondary" style="font-size:12px;margin-bottom:10px">品牌主色 · 青色辅色 · 中性面 · 语义状态（随主题切换）</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div><div style="height:56px;border-radius:12px;background:var(--brand)"></div><div style="font-size:12px;margin-top:6px">brand <span class="mono secondary">#8b5cf6</span></div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--brand-cyan)"></div><div style="font-size:12px;margin-top:6px">brand-cyan <span class="mono secondary">#06b6d4</span></div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--bg-primary);border:1px solid var(--border-color)"></div><div style="font-size:12px;margin-top:6px">bg-primary</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--bg-secondary);border:1px solid var(--border-color)"></div><div style="font-size:12px;margin-top:6px">bg-secondary</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--bg-tertiary)"></div><div style="font-size:12px;margin-top:6px">bg-tertiary</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--text-primary)"></div><div style="font-size:12px;margin-top:6px">text-primary</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--text-secondary)"></div><div style="font-size:12px;margin-top:6px">text-secondary</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--border-color)"></div><div style="font-size:12px;margin-top:6px">border-color</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--success-color)"></div><div style="font-size:12px;margin-top:6px">success</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--warning-color)"></div><div style="font-size:12px;margin-top:6px">warning</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--error-color)"></div><div style="font-size:12px;margin-top:6px">error</div></div>
+        <div><div style="height:56px;border-radius:12px;background:var(--info-color)"></div><div style="font-size:12px;margin-top:6px">info</div></div>
+      </div>
+    </div>
+
+    <!-- Typography + spacing -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="card">
+        <div class="card-title mb-3">字体 Typography</div>
+        <div style="font-size:32px;font-weight:700;letter-spacing:-0.02em">Inter · 标题 32/Bold</div>
+        <div style="font-size:18px;font-weight:600">Inter · 小标题 18/Semi</div>
+        <div style="font-size:14px">Inter · 正文 14/Regular — 用于绝大多数界面文本</div>
+        <div style="font-size:12px" class="secondary">Inter · 辅助 12 — 时间戳、提示</div>
+        <div class="mono secondary" style="font-size:13px;margin-top:8px">JetBrains Mono · 用于 Trace / JSON / token 计数</div>
+      </div>
+      <div class="card">
+        <div class="card-title mb-3">间距 Spacing</div>
+        <div class="flex items-end gap-2">
+          <div style="width:4px;height:4px;background:var(--brand)"></div><div style="width:8px;height:8px;background:var(--brand)"></div><div style="width:12px;height:12px;background:var(--brand)"></div><div style="width:16px;height:16px;background:var(--brand)"></div><div style="width:24px;height:24px;background:var(--brand)"></div><div style="width:32px;height:32px;background:var(--brand)"></div>
+        </div>
+        <div class="mono secondary" style="font-size:12px;margin-top:8px">4 · 8 · 12 · 16 · 24 · 32 (--space-1…8)</div>
+        <div class="card-title mb-2 mt-4">圆角 Radius</div>
+        <div class="flex items-end gap-2">
+          <div style="width:32px;height:32px;background:var(--bg-tertiary);border-radius:6px"></div>
+          <div style="width:32px;height:32px;background:var(--bg-tertiary);border-radius:12px"></div>
+          <div style="width:32px;height:32px;background:var(--bg-tertiary);border-radius:16px"></div>
+          <div style="width:32px;height:32px;background:var(--bg-tertiary);border-radius:20px"></div>
+        </div>
+        <div class="mono secondary" style="font-size:12px;margin-top:8px">sm 6 · md 12 · xl 16 · lg 20</div>
+      </div>
+    </div>
+
+    <!-- Components -->
+    <div class="card mb-4">
+      <div class="card-title mb-3">组件 Components</div>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-secondary">Secondary</button>
+        <button class="btn btn-outline">Outline</button>
+        <button class="btn btn-ghost">Ghost</button>
+        <button class="btn btn-danger">Danger</button>
+        <button class="btn btn-primary" disabled>Disabled</button>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <span class="badge badge-success">成功</span>
+        <span class="badge badge-warning">警告</span>
+        <span class="badge badge-error">错误</span>
+        <span class="badge badge-info">信息</span>
+        <span class="badge badge-brand">品牌</span>
+        <span class="badge badge-cyan">青色</span>
+        <span class="badge badge-gray">中性</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div class="field" style="margin:0"><label class="field-label">输入框</label><input class="input" placeholder="输入内容…" /></div>
+        <div class="field" style="margin:0"><label class="field-label">下拉</label><select class="select"><option>选项 A</option><option>选项 B</option></select></div>
+        <div class="flex items-center gap-3"><label class="switch"><input type="checkbox" checked><span class="slider"></span></label><span style="font-size:13px">Switch 开关</span></div>
+      </div>
+      <div class="mt-4"><div class="segmented" data-seg-group><button class="seg-btn active" data-seg>卡片</button><button class="seg-btn" data-seg>列表</button><button class="seg-btn" data-seg>看板</button></div></div>
+      <div class="mt-4"><div class="card-title" style="font-size:13px;margin-bottom:6px">进度 Progress</div><div class="progress"><span style="width:72%"></span></div></div>
+    </div>
+
+    <div class="card mb-4" style="background:var(--accent-light)">
+      <div class="card-title mb-2">使用方式</div>
+      <div class="mono secondary" style="font-size:12px;line-height:1.8">
+        每个页面为独立 HTML，使用 Tailwind CDN + 共享 design-system.css / design-system.js。<br/>
+        主题：&lt;html data-theme="dark|light"&gt; ，右上角按钮或 design-system.js 自动持久化。<br/>
+        响应式断点：1024px（侧栏转抽屉）/ 640px（移动端）。交互状态（hover / active / disabled / selected）均已覆盖。
+      </div>
+    </div>
+
+    <div class="secondary" style="font-size:12px;text-align:center;padding:24px 0">pi-agent UI 原型 · 由 ui-designer 输出 · 与 apps/web 现有设计语言（index.css）保持一致</div>
+  </div>
+</body>
+</html>

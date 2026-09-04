@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 方案详情</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .deploy-btn { background: linear-gradient(135deg, var(--brand), var(--brand-cyan)); }
+    .deploy-btn:hover { background: linear-gradient(135deg, var(--brand-hover), var(--brand-cyan-hover)); }
+    .industry-icon { width:56px;height:56px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:26px; }
+    .component-card { transition: border-color var(--transition-fast), transform var(--transition-fast); }
+    .component-card:hover { border-color: var(--brand); transform: translateY(-2px); }
+    .step-dot { width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0; }
+    .preview-panel { background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 16px; }
+    .stat-pill { display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-tertiary); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="location.href='m6-solution-create.html'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>创建方案</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <a class="nav-item active" data-nav href="m6-solution-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span>行业方案</span><span class="badge badge-brand nav-badge">M6</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="m6-cloud-subscription.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg><span>云端订阅</span></a>
+        <a class="nav-item" data-nav href="m6-sso-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg><span>SSO 配置</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v3.0.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索组件、模板、知识库…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('已收藏方案')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21l-1.5-1.4C5 14.5 2 11.9 2 8.5 2 6 4 4 6.5 4c1.7 0 3.4.9 4.5 2.3C12.1 4.9 13.8 4 15.5 4 18 4 20 6 20 8.5c0 3.4-3 6-8.5 11.1L12 21z"/></svg>收藏</button>
+        <button class="btn btn-primary btn-sm deploy-btn" onclick="piToast('正在部署金融智能客服方案…')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>一键部署</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><a href="m6-solution-market.html">行业方案</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>金融智能客服方案</span></div>
+
+        <!-- Solution Overview -->
+        <div class="card mb-4" style="background:linear-gradient(135deg,rgba(139,92,246,0.1),transparent)">
+          <div class="flex items-start gap-4">
+            <div class="industry-icon" style="background:linear-gradient(135deg,#8b5cf6,#06b6d4)"><span>🏦</span></div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1"><h1 class="page-title" style="font-size:22px">金融智能客服方案</h1><span class="badge badge-brand">官方</span><span class="badge badge-success">推荐</span></div>
+              <p class="page-subtitle" style="margin-bottom:12px">银行 · 证券 · 保险 — 合规问答 + 智能工单 + 风险预警，覆盖 80% 常见金融业务场景</p>
+              <div class="flex flex-wrap gap-4" style="font-size:12px;color:var(--text-secondary)">
+                <span>⭐ 4.9 评分</span><span>📦 2,435 次部署</span><span>🔄 更新于 2026-08-28</span><span>👤 官方团队</span>
+              </div>
+            </div>
+            <button class="btn btn-primary deploy-btn" onclick="piToast('正在部署…')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>一键部署</button>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab active" data-tab data-tab-target="overview">方案概览</button>
+          <button class="tab" data-tab data-tab-target="templates">模板 (3)</button>
+          <button class="tab" data-tab data-tab-target="knowledge">知识库 (2)</button>
+          <button class="tab" data-tab data-tab-target="workflows">工作流 (1)</button>
+          <button class="tab" data-tab data-tab-target="deployment">部署指南</button>
+        </div>
+
+        <!-- Tab: Overview -->
+        <div class="tab-content active" data-tab-panel="overview">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div class="card"><div class="secondary" style="font-size:12px">包含模板</div><div style="font-size:28px;font-weight:700;margin-top:4px">3</div><span class="badge badge-brand" style="margin-top:4px">Agent 模板</span></div>
+            <div class="card"><div class="secondary" style="font-size:12px">知识库</div><div style="font-size:28px;font-weight:700;margin-top:4px">2</div><span class="badge badge-cyan" style="margin-top:4px">专业知识库</span></div>
+            <div class="card"><div class="secondary" style="font-size:12px">工作流</div><div style="font-size:28px;font-weight:700;margin-top:4px">1</div><span class="badge badge-success" style="margin-top:4px">自动化流程</span></div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-title mb-3">方案能力</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="flex items-start gap-2"><span class="status-dot green" style="margin-top:5px"></span><div><div style="font-weight:500;font-size:13px">合规问答</div><div class="secondary" style="font-size:12px">基于金融法规的智能问答，确保回答合规性</div></div></div>
+              <div class="flex items-start gap-2"><span class="status-dot green" style="margin-top:5px"></span><div><div style="font-weight:500;font-size:13px">智能工单</div><div class="secondary" style="font-size:12px">自动分类、派单、跟踪，提升客服效率</div></div></div>
+              <div class="flex items-start gap-2"><span class="status-dot green" style="margin-top:5px"></span><div><div style="font-weight:500;font-size:13px">风险预警</div><div class="secondary" style="font-size:12px">实时监测异常交易与操作风险</div></div></div>
+              <div class="flex items-start gap-2"><span class="status-dot green" style="margin-top:5px"></span><div><div style="font-weight:500;font-size:13px">多语言支持</div><div class="secondary" style="font-size:12px">支持中英日韩等多语言客户服务</div></div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title mb-3">适用场景</div>
+            <div class="flex flex-wrap gap-2">
+              <span class="badge badge-gray">银行网点咨询</span>
+              <span class="badge badge-gray">证券开户指导</span>
+              <span class="badge badge-gray">保险理赔咨询</span>
+              <span class="badge badge-gray">基金产品推荐</span>
+              <span class="badge badge-gray">贷款申请辅助</span>
+              <span class="badge badge-gray">反洗钱合规</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Templates -->
+        <div class="tab-content" data-tab-panel="templates">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="card component-card">
+              <div class="flex items-center gap-3 mb-3"><div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)">客</div><div><div style="font-weight:600">金融合规客服</div><span class="badge badge-brand">Agent</span></div></div>
+              <div class="secondary" style="font-size:12px;margin-bottom:10px">基于金融法规的智能客服，自动识别合规风险并给出建议回答</div>
+              <div class="flex items-center justify-between"><span class="stat-pill">★ 4.9 · 1.2k 克隆</span><button class="btn btn-ghost btn-xs" onclick="piToast('预览模板')">预览</button></div>
+            </div>
+            <div class="card component-card">
+              <div class="flex items-center gap-3 mb-3"><div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#06b6d4,#3b82f6)">工</div><div><div style="font-weight:600">智能工单助手</div><span class="badge badge-brand">Agent</span></div></div>
+              <div class="secondary" style="font-size:12px;margin-bottom:10px">自动分类客户问题，智能派单到对应部门，跟踪处理进度</div>
+              <div class="flex items-center justify-between"><span class="stat-pill">★ 4.8 · 856 克隆</span><button class="btn btn-ghost btn-xs" onclick="piToast('预览模板')">预览</button></div>
+            </div>
+            <div class="card component-card">
+              <div class="flex items-center gap-3 mb-3"><div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#10b981,#06b6d4)">风</div><div><div style="font-weight:600">风险预警分析</div><span class="badge badge-brand">Agent</span></div></div>
+              <div class="secondary" style="font-size:12px;margin-bottom:10px">实时分析交易数据，识别异常模式并触发预警通知</div>
+              <div class="flex items-center justify-between"><span class="stat-pill">★ 4.7 · 623 克隆</span><button class="btn btn-ghost btn-xs" onclick="piToast('预览模板')">预览</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Knowledge -->
+        <div class="tab-content" data-tab-panel="knowledge">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="card component-card">
+              <div class="flex items-center gap-3 mb-3"><div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#8b5cf6);font-size:18px">📚</div><div><div style="font-weight:600">金融法规知识库</div><span class="badge badge-cyan">知识库</span></div></div>
+              <div class="secondary" style="font-size:12px;margin-bottom:10px">涵盖银行、证券、保险相关法规，持续更新监管政策</div>
+              <div class="flex gap-3 mb-3"><span class="stat-pill">📄 2,456 文档</span><span class="stat-pill">💾 128 MB</span></div>
+              <button class="btn btn-ghost btn-xs" onclick="piToast('预览知识库')">预览</button>
+            </div>
+            <div class="card component-card">
+              <div class="flex items-center gap-3 mb-3"><div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:18px">📖</div><div><div style="font-weight:600">金融产品手册</div><span class="badge badge-cyan">知识库</span></div></div>
+              <div class="secondary" style="font-size:12px;margin-bottom:10px">基金、理财、贷款等产品说明与对比分析</div>
+              <div class="flex gap-3 mb-3"><span class="stat-pill">📄 1,823 文档</span><span class="stat-pill">💾 95 MB</span></div>
+              <button class="btn btn-ghost btn-xs" onclick="piToast('预览知识库')">预览</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Workflows -->
+        <div class="tab-content" data-tab-panel="workflows">
+          <div class="card component-card" style="max-width:600px">
+            <div class="flex items-center gap-3 mb-3"><div class="agent-ico" style="width:42px;height:42px;background:linear-gradient(135deg,#10b981,#3b82f6)">⚡</div><div><div style="font-weight:600">智能客服工单流程</div><span class="badge badge-success">工作流</span></div></div>
+            <div class="secondary" style="font-size:12px;margin-bottom:12px">自动化工单处理：接收 → 分类 → 派单 → 处理 → 回访 → 归档</div>
+            <div class="preview-panel">
+              <div class="flex items-center gap-3 mb-2"><div class="step-dot" style="background:var(--brand);color:#fff">1</div><span style="font-size:12px">接收客户问题</span></div>
+              <div class="flex items-center gap-3 mb-2"><div class="step-dot" style="background:var(--brand);color:#fff">2</div><span style="font-size:12px">AI 分类与优先级判断</span></div>
+              <div class="flex items-center gap-3 mb-2"><div class="step-dot" style="background:var(--brand);color:#fff">3</div><span style="font-size:12px">自动派单至对应部门</span></div>
+              <div class="flex items-center gap-3 mb-2"><div class="step-dot" style="background:var(--brand);color:#fff">4</div><span style="font-size:12px">处理与回复</span></div>
+              <div class="flex items-center gap-3"><div class="step-dot" style="background:var(--success-color);color:#fff">5</div><span style="font-size:12px">满意度回访与归档</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Deployment -->
+        <div class="tab-content" data-tab-panel="deployment">
+          <div class="card mb-4">
+            <div class="card-title mb-3">部署步骤</div>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3"><div class="step-dot" style="background:var(--brand);color:#fff">1</div><div><div style="font-weight:500;font-size:13px">选择部署目标</div><div class="secondary" style="font-size:12px">选择要部署到的环境（开发/测试/生产）</div></div></div>
+              <div class="flex items-start gap-3"><div class="step-dot" style="background:var(--brand);color:#fff">2</div><div><div style="font-weight:500;font-size:13px">配置参数</div><div class="secondary" style="font-size:12px">设置 API 密钥、数据库连接等必要参数</div></div></div>
+              <div class="flex items-start gap-3"><div class="step-dot" style="background:var(--brand);color:#fff">3</div><div><div style="font-weight:500;font-size:13px">确认部署</div><div class="secondary" style="font-size:12px">预览所有配置，确认后开始部署</div></div></div>
+              <div class="flex items-start gap-3"><div class="step-dot" style="background:var(--success-color);color:#fff">✓</div><div><div style="font-weight:500;font-size:13px">部署完成</div><div class="secondary" style="font-size:12px">所有组件已部署并初始化，可立即使用</div></div></div>
+            </div>
+          </div>
+          <button class="btn btn-primary deploy-btn" onclick="piToast('开始部署…')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>一键部署</button>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

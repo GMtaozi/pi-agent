@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · 网关指标</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .metric-card{padding:18px 20px;border-radius:var(--radius-lg);border:1px solid var(--border-color);background:var(--bg-secondary);position:relative;overflow:hidden}
+    .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--brand),var(--brand-cyan));opacity:0}
+    .metric-card:hover::before{opacity:1}
+    .metric-value{font-size:28px;font-weight:700;letter-spacing:-0.02em;line-height:1.2}
+    .metric-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+    .metric-delta{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px}
+    .delta-up{background:var(--success-bg);color:var(--success-color)}
+    .delta-down{background:var(--error-bg);color:var(--error-color)}
+    .pie-chart{width:180px;height:180px;border-radius:50%;position:relative}
+    .pie-legend{display:flex;flex-direction:column;gap:8px}
+    .legend-item{display:flex;align-items:center;gap:8px;font-size:12.5px}
+    .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .legend-value{margin-left:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--text-tertiary)}
+    .provider-row{display:grid;grid-template-columns:1fr 80px 80px 80px 60px;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border-light);font-size:12.5px}
+    .provider-row:last-child{border-bottom:none}
+    .provider-row:hover{background:var(--bg-hover)}
+    .provider-head{display:grid;grid-template-columns:1fr 80px 80px 80px 60px;gap:12px;padding:9px 14px;font-size:11.5px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border-strong)}
+    .bar-cell{display:flex;align-items:center;gap:8px}
+    .bar-track{flex:1;height:6px;border-radius:999px;background:var(--bg-tertiary);overflow:hidden;min-width:40px}
+    .bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand),var(--brand-cyan))}
+    .savings-highlight{background:linear-gradient(135deg,var(--success-bg),var(--accent-cyan-light));border:1px solid rgba(129,201,149,.3);border-radius:var(--radius-lg);padding:20px}
+    @media(max-width:900px){.pie-chart{width:140px;height:140px}.provider-row,.provider-head{grid-template-columns:1fr 60px 60px}.provider-row>*:nth-child(3),.provider-row>*:nth-child(4),.provider-head>*:nth-child(3),.provider-head>*:nth-child(4){display:none}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('导出网关报告')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>导出报告</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span></a>
+        <a class="nav-item" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <div class="nav-section-label">治理与合规</div>
+        <a class="nav-item" data-nav href="m4-members-permissions.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>成员与权限</span></a>
+        <a class="nav-item" data-nav href="m4-approval-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>审批中心</span></a>
+        <a class="nav-item" data-nav href="m4-audit-logs.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h6M8 17h8M8 9h2"/></svg><span>审计日志</span></a>
+        <div class="nav-section-label">商业化</div>
+        <a class="nav-item" data-nav href="m4-billing-usage.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg><span>用量与账单</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <div class="nav-section-label">可观测性</div>
+        <a class="nav-item" data-nav href="m5-observability-dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>可观测性仪表盘</span></a>
+        <a class="nav-item" data-nav href="m5-trace-viewer.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8L7 17M17 7l2.8-2.8"/></svg><span>调用链追踪</span></a>
+        <a class="nav-item" data-nav href="m5-anomaly-list.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.41 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>异常列表</span></a>
+        <a class="nav-item" data-nav href="m5-gateway-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><circle cx="6" cy="6" r="1"/><circle cx="6" cy="18" r="1"/></svg><span>AI 网关配置</span></a>
+        <a class="nav-item active" data-nav href="m5-gateway-metrics.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M12 7v5l3 3"/></svg><span>网关指标</span></a>
+        <a class="nav-item" data-nav href="m5-eval-dataset.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg><span>评测数据集</span></a>
+        <a class="nav-item" data-nav href="m5-eval-run.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg><span>评测执行</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.6.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索指标、Provider…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <span class="filter-chip active" style="cursor:pointer">本月</span>
+        <span class="filter-chip" style="cursor:pointer">上月</span>
+        <span class="filter-chip" style="cursor:pointer">本季度</span>
+        <button class="btn btn-secondary btn-sm" onclick="piToast('导出网关指标报告')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>导出</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>可观测性</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>网关指标</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">网关指标</h1>
+            <p class="page-subtitle">AI 网关运行数据 · 成本节省 · Provider 分布 · 路由命中率</p>
+          </div>
+        </div>
+
+        <!-- 关键指标 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="metric-card">
+            <div class="metric-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>本月总成本</div>
+            <div class="metric-value">¥6,371</div>
+            <div class="flex items-center gap-2" style="margin-top:6px"><span class="metric-delta delta-down">↓ 22.1%</span><span class="secondary" style="font-size:11px">vs 上月</span></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>路由命中率</div>
+            <div class="metric-value">97.8<span style="font-size:16px;font-weight:500;color:var(--text-secondary)">%</span></div>
+            <div class="flex items-center gap-2" style="margin-top:6px"><span class="metric-delta delta-up">↑ 1.2%</span><span class="secondary" style="font-size:11px">vs 上月</span></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>平均响应耗时</div>
+            <div class="metric-value">1.4<span style="font-size:16px;font-weight:500;color:var(--text-secondary)">s</span></div>
+            <div class="flex items-center gap-2" style="margin-top:6px"><span class="metric-delta delta-up">↓ 8.5%</span><span class="secondary" style="font-size:11px">vs 上月</span></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>总请求数</div>
+            <div class="metric-value">48.2<span style="font-size:16px;font-weight:500;color:var(--text-secondary)">K</span></div>
+            <div class="flex items-center gap-2" style="margin-top:6px"><span class="metric-delta delta-down">↑ 18.3%</span><span class="secondary" style="font-size:11px">vs 上月</span></div>
+          </div>
+        </div>
+
+        <!-- 成本节省 + Provider 分布 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <!-- 成本节省 -->
+          <div class="savings-highlight">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success-color)" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+              <div style="font-size:13.5px;font-weight:600;color:var(--success-color)">成本节省统计</div>
+            </div>
+            <div class="secondary" style="font-size:11.5px;margin-bottom:14px">通过智能路由选择性价比最优的 Provider，对比全部使用 GPT-4o 的成本</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:14px">
+                <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px">本月节省</div>
+                <div style="font-size:22px;font-weight:700;color:var(--success-color)">¥4,218</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">对比全量 GPT-4o</div>
+              </div>
+              <div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:14px">
+                <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px">节省比例</div>
+                <div style="font-size:22px;font-weight:700;color:var(--success-color)">39.7%</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">成本降低幅度</div>
+              </div>
+              <div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:14px">
+                <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px">累计节省</div>
+                <div style="font-size:22px;font-weight:700;color:var(--brand-cyan)">¥28,640</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">自网关上线以来</div>
+              </div>
+              <div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:14px">
+                <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px">质量保持</div>
+                <div style="font-size:22px;font-weight:700;color:var(--brand-cyan)">99.2%</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">用户满意度无下降</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Provider 分布 -->
+          <div class="card">
+            <div style="font-size:13.5px;font-weight:600;margin-bottom:14px">Provider 分布</div>
+            <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+              <div class="pie-chart" style="background:conic-gradient(var(--brand) 0% 42%, var(--brand-cyan) 42% 71%, var(--warning-color) 71% 90%, var(--text-tertiary) 90% 100%);flex-shrink:0">
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+                  <div style="width:80px;height:80px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-tertiary)">48.2K</div>
+                </div>
+              </div>
+              <div class="pie-legend">
+                <div class="legend-item"><span class="legend-dot" style="background:var(--brand)"></span><span>OpenAI</span><span class="legend-value">42%</span></div>
+                <div class="legend-item"><span class="legend-dot" style="background:var(--brand-cyan)"></span><span>Anthropic</span><span class="legend-value">29%</span></div>
+                <div class="legend-item"><span class="legend-dot" style="background:var(--warning-color)"></span><span>DeepSeek</span><span class="legend-value">19%</span></div>
+                <div class="legend-item"><span class="legend-dot" style="background:var(--text-tertiary)"></span><span>其他</span><span class="legend-value">10%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Provider 详情表 -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border-color)">
+            <div style="font-size:13.5px;font-weight:600">Provider 详情</div>
+            <div class="secondary" style="font-size:11.5px;margin-top:2px">各 Provider 的请求量、成本与命中率</div>
+          </div>
+          <div class="provider-head"><div>Provider</div><div style="text-align:right">请求数</div><div style="text-align:right">成本</div><div style="text-align:right">占比</div><div style="text-align:right">命中率</div></div>
+          <div class="provider-row">
+            <div style="display:flex;align-items:center;gap:8px"><span class="legend-dot" style="background:var(--brand)"></span><span style="font-weight:500">OpenAI</span></div>
+            <div style="text-align:right" class="mono">20,244</div>
+            <div style="text-align:right" class="mono">¥3,186</div>
+            <div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:42%"></div></div><span class="mono" style="font-size:11px;color:var(--text-tertiary)">42%</span></div>
+            <div style="text-align:right"><span class="badge badge-success">98.2%</span></div>
+          </div>
+          <div class="provider-row">
+            <div style="display:flex;align-items:center;gap:8px"><span class="legend-dot" style="background:var(--brand-cyan)"></span><span style="font-weight:500">Anthropic</span></div>
+            <div style="text-align:right" class="mono">13,978</div>
+            <div style="text-align:right" class="mono">¥1,842</div>
+            <div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:29%"></div></div><span class="mono" style="font-size:11px;color:var(--text-tertiary)">29%</span></div>
+            <div style="text-align:right"><span class="badge badge-success">97.5%</span></div>
+          </div>
+          <div class="provider-row">
+            <div style="display:flex;align-items:center;gap:8px"><span class="legend-dot" style="background:var(--warning-color)"></span><span style="font-weight:500">DeepSeek</span></div>
+            <div style="text-align:right" class="mono">9,158</div>
+            <div style="text-align:right" class="mono">¥543</div>
+            <div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:19%"></div></div><span class="mono" style="font-size:11px;color:var(--text-tertiary)">19%</span></div>
+            <div style="text-align:right"><span class="badge badge-success">99.1%</span></div>
+          </div>
+          <div class="provider-row">
+            <div style="display:flex;align-items:center;gap:8px"><span class="legend-dot" style="background:var(--text-tertiary)"></span><span style="font-weight:500">其他</span></div>
+            <div style="text-align:right" class="mono">4,820</div>
+            <div style="text-align:right" class="mono">¥800</div>
+            <div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:10%"></div></div><span class="mono" style="font-size:11px;color:var(--text-tertiary)">10%</span></div>
+            <div style="text-align:right"><span class="badge badge-success">96.8%</span></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

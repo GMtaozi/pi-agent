@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pi-agent · MCP 接入配置</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode:'class', theme:{ extend:{ fontFamily:{ sans:['Inter','system-ui','sans-serif'], mono:['JetBrains Mono','monospace'] }, colors:{ brand:'var(--brand)','brand-hover':'var(--brand-hover)',cyan:'var(--brand-cyan)', bgp:'var(--bg-primary)',bgs:'var(--bg-secondary)',bgt:'var(--bg-tertiary)',bgh:'var(--bg-hover)',bge:'var(--bg-elevated)',bgi:'var(--bg-input)',bgc:'var(--bg-canvas)', tp:'var(--text-primary)',ts:'var(--text-secondary)',tt:'var(--text-tertiary)', ok:'var(--success-color)',warn:'var(--warning-color)',err:'var(--error-color)',info:'var(--info-color)' }, borderColor:{ DEFAULT:'var(--border-color)',strong:'var(--border-strong)' } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="design-system.css" />
+  <script src="design-system.js"></script>
+  <style>
+    .mcp-row { transition: background var(--transition-fast); }
+    .mcp-row:hover { background: var(--bg-hover); }
+    .tool-pill { display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:var(--bg-tertiary);color:var(--text-secondary);border:1px solid var(--border-color);font-family:var(--font-mono); }
+    .code-box { background:var(--bg-canvas);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:12px 14px;font-family:var(--font-mono);font-size:12.5px;color:var(--text-secondary);line-height:1.7;white-space:pre-wrap;word-break:break-all; }
+    .code-box .k { color:var(--brand); } .code-box .s { color:var(--success-color); } .code-box .c { color:var(--text-tertiary); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand-row">
+        <div class="brand-mark"><div class="brand-logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3z"/><circle cx="18.5" cy="17" r="2.2"/><circle cx="5.5" cy="17" r="1.6"/></svg></div><span class="brand-text brand-name">pi<b>·</b>agent</span></div>
+        <button class="nav-toggle" data-collapse-sidebar><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+      </div>
+      <button class="nav-new-btn" onclick="piToast('打开新增 MCP Server')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>新增 Server</span></button>
+      <nav class="nav-scroll" data-nav-group>
+        <div class="nav-section-label">工作区</div>
+        <a class="nav-item" data-nav href="dashboard.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>仪表盘</span></a>
+        <a class="nav-item" data-nav href="agents.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 100-6 3 3 0 000 6z"/><path d="M5 21a7 7 0 0114 0"/></svg><span>Agent 管理</span></a>
+        <a class="nav-item" data-nav href="knowledge.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a3 3 0 013 3v13H7a3 3 0 01-3-3V4z"/><path d="M4 4a2 2 0 012-2h2v18"/><path d="M18 8h2a2 2 0 010 4h-2"/></svg><span>知识库</span></a>
+        <a class="nav-item" data-nav href="m2-template-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg><span>模板市场</span></a>
+        <div class="nav-section-label">扩展生态</div>
+        <a class="nav-item" data-nav href="m3-plugin-market.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 6.5a4.5 4.5 0 00-6.4 0L12 8.6 9.9 6.5a4.5 4.5 0 10-6.4 6.4L12 21l8.5-8.1a4.5 4.5 0 000-6.4z"/></svg><span>插件市场</span><span class="badge badge-brand nav-badge">NEW</span></a>
+        <a class="nav-item active" data-nav href="m3-mcp-config.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>MCP 接入</span></a>
+        <a class="nav-item" data-nav href="m3-developer-center.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg><span>开发者中心</span></a>
+        <a class="nav-item" data-nav href="monitor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>监控面板</span></a>
+        <a class="nav-item" data-nav href="notifications.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>通知中心</span></a>
+        <div class="nav-section-label">对话</div>
+        <a class="nav-item" data-nav href="chat.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg><span>对话调试</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="conn-status"><span class="conn-dot"></span><span>已连接 · v2.5.0</span></div>
+        <a class="settings-trigger nav-item" data-nav href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 005 19.4a1.6 1.6 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 002.6 14H2.5a2 2 0 110-4h.1A1.6 1.6 0 004.6 8.5l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 0010 5.6V5.5a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 001.1 2.7H21a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg><span>设置</span></a>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" data-close-sidebar></div>
+
+    <div class="main">
+      <header class="header">
+        <button class="icon-btn mobile-menu-btn" data-open-sidebar><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="header-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input type="text" placeholder="搜索 MCP Server、工具…" /><kbd>⌘K</kbd></div>
+        <div class="header-spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="openAddServer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增 Server</button>
+        <button class="icon-btn" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+        <div class="avatar" title="林知遥">林</div>
+      </header>
+
+      <main class="content">
+        <div class="breadcrumb"><a href="dashboard.html">工作区</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>扩展生态</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>MCP 接入</span></div>
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">MCP 接入配置</h1>
+            <p class="page-subtitle">通过 Model Context Protocol 接入外部工具与数据 · 已连接 5 个 Server，共 42 个工具</p>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-secondary btn-sm" onclick="discoverAll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21l-4-4M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>批量发现</button>
+            <button class="btn btn-primary btn-sm" onclick="openAddServer()">新增 Server</button>
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="card"><div class="secondary" style="font-size:12px">已接入 Server</div><div style="font-size:26px;font-weight:700;margin-top:4px">5</div><div class="status-dot green" style="display:inline-block;margin-top:4px"></div><span class="secondary" style="font-size:12px;margin-left:6px">4 在线 · 1 离线</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">可用工具</div><div style="font-size:26px;font-weight:700;margin-top:4px">42</div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">覆盖 9 类能力</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">今日调用</div><div style="font-size:26px;font-weight:700;margin-top:4px">8,914</div><span class="badge badge-success" style="display:inline-block;margin-top:4px">↑ 12%</span></div>
+          <div class="card"><div class="secondary" style="font-size:12px">平均延迟</div><div style="font-size:26px;font-weight:700;margin-top:4px">86<span style="font-size:14px;font-weight:500">ms</span></div><span class="secondary" style="font-size:12px;display:block;margin-top:4px">P95 · 210ms</span></div>
+        </div>
+
+        <!-- Server list -->
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="card-head" style="padding:16px 20px;margin:0;border-bottom:1px solid var(--border-color)">
+            <div class="card-title">Server 列表</div>
+            <div class="segmented" data-seg-group>
+              <button class="seg-btn active" data-seg>全部</button>
+              <button class="seg-btn" data-seg>在线</button>
+              <button class="seg-btn" data-seg>离线</button>
+            </div>
+          </div>
+          <table class="table">
+            <thead><tr><th>Server</th><th>类型</th><th>连接状态</th><th>工具</th><th>延迟</th><th>最后心跳</th><th></th></tr></thead>
+            <tbody>
+              <tr class="mcp-row" id="srv-filesystem">
+                <td><div class="flex items-center gap-3"><div class="agent-ico" style="width:34px;height:34px;background:linear-gradient(135deg,#8b5cf6,#06b6d4)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></div><div><div style="font-weight:500">filesystem</div><div class="muted" style="font-size:11px">本地文件系统 · stdio</div></div></div></td>
+                <td><span class="badge badge-gray">官方</span></td>
+                <td><span class="flex items-center gap-2"><span class="status-dot green"></span><span class="secondary" style="font-size:12px">已连接</span></span></td>
+                <td><span class="tool-pill">12 工具</span></td>
+                <td class="mono secondary" style="font-size:12px">42ms</td>
+                <td class="secondary" style="font-size:12px">3 秒前</td>
+                <td><div class="flex gap-1 justify-end"><button class="btn btn-ghost btn-xs" onclick="showTools('filesystem')">工具</button><button class="btn btn-ghost btn-xs" onclick="toggleServer(this,'filesystem')">停用</button></div></td>
+              </tr>
+              <tr class="mcp-row" id="srv-github">
+                <td><div class="flex items-center gap-3"><div class="agent-ico" style="width:34px;height:34px;background:linear-gradient(135deg,#3b82f6,#8b5cf6)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-4 1.5-4-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 00-1.3-3.2 4.3 4.3 0 00-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 00-6 0C6.3 3.1 5.3 3.4 5.3 3.4a4.3 4.3 0 00-.1 3.2A4.6 4.6 0 003.9 9.8c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></div><div><div style="font-weight:500">github</div><div class="muted" style="font-size:11px">GitHub REST · sse</div></div></div></td>
+                <td><span class="badge badge-gray">官方</span></td>
+                <td><span class="flex items-center gap-2"><span class="status-dot green"></span><span class="secondary" style="font-size:12px">已连接</span></span></td>
+                <td><span class="tool-pill">9 工具</span></td>
+                <td class="mono secondary" style="font-size:12px">118ms</td>
+                <td class="secondary" style="font-size:12px">1 分钟前</td>
+                <td><div class="flex gap-1 justify-end"><button class="btn btn-ghost btn-xs" onclick="showTools('github')">工具</button><button class="btn btn-ghost btn-xs" onclick="toggleServer(this,'github')">停用</button></div></td>
+              </tr>
+              <tr class="mcp-row" id="srv-postgres">
+                <td><div class="flex items-center gap-3"><div class="agent-ico" style="width:34px;height:34px;background:linear-gradient(135deg,#06b6d4,#3b82f6)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg></div><div><div style="font-weight:500">postgres</div><div class="muted" style="font-size:11px">只读数据库 · sse</div></div></div></td>
+                <td><span class="badge badge-gray">官方</span></td>
+                <td><span class="flex items-center gap-2"><span class="status-dot green"></span><span class="secondary" style="font-size:12px">已连接</span></span></td>
+                <td><span class="tool-pill">7 工具</span></td>
+                <td class="mono secondary" style="font-size:12px">63ms</td>
+                <td class="secondary" style="font-size:12px">8 秒前</td>
+                <td><div class="flex gap-1 justify-end"><button class="btn btn-ghost btn-xs" onclick="showTools('postgres')">工具</button><button class="btn btn-ghost btn-xs" onclick="toggleServer(this,'postgres')">停用</button></div></td>
+              </tr>
+              <tr class="mcp-row" id="srv-slack">
+                <td><div class="flex items-center gap-3"><div class="agent-ico" style="width:34px;height:34px;background:linear-gradient(135deg,#ec4899,#8b5cf6)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M8 12l3 3 5-6"/></svg></div><div><div style="font-weight:500">slack</div><div class="muted" style="font-size:11px">Slack API · sse</div></div></div></td>
+                <td><span class="badge badge-gray">官方</span></td>
+                <td><span class="flex items-center gap-2"><span class="status-dot green"></span><span class="secondary" style="font-size:12px">已连接</span></span></td>
+                <td><span class="tool-pill">6 工具</span></td>
+                <td class="mono secondary" style="font-size:12px">95ms</td>
+                <td class="secondary" style="font-size:12px">22 秒前</td>
+                <td><div class="flex gap-1 justify-end"><button class="btn btn-ghost btn-xs" onclick="showTools('slack')">工具</button><button class="btn btn-ghost btn-xs" onclick="toggleServer(this,'slack')">停用</button></div></td>
+              </tr>
+              <tr class="mcp-row" id="srv-calendar">
+                <td><div class="flex items-center gap-3"><div class="agent-ico" style="width:34px;height:34px;background:linear-gradient(135deg,#f59e0b,#8b5cf6)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div><div style="font-weight:500">calendar</div><div class="muted" style="font-size:11px">Google Calendar · sse</div></div></div></td>
+                <td><span class="badge badge-warning">社区</span></td>
+                <td><span class="flex items-center gap-2"><span class="status-dot red"></span><span class="secondary" style="font-size:12px">连接失败</span></span></td>
+                <td><span class="tool-pill">8 工具</span></td>
+                <td class="mono secondary" style="font-size:12px">—</td>
+                <td class="secondary" style="font-size:12px">5 分钟前</td>
+                <td><div class="flex gap-1 justify-end"><button class="btn btn-ghost btn-xs" onclick="retryServer('calendar')">重试</button><button class="btn btn-ghost btn-xs" onclick="toggleServer(this,'calendar')">删除</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tool discovery panel -->
+        <div class="card mt-4">
+          <div class="card-head"><div class="card-title">工具发现结果</div><div class="flex items-center gap-2"><span class="badge badge-gray" id="toolCount">42</span><button class="btn btn-secondary btn-xs" onclick="discoverAll()">重新发现</button></div></div>
+          <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3" id="toolGrid">
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">read_file</span><span class="muted" style="font-size:11px">filesystem</span></div>
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">write_file</span><span class="muted" style="font-size:11px">filesystem</span></div>
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">list_dir</span><span class="muted" style="font-size:11px">filesystem</span></div>
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">create_issue</span><span class="muted" style="font-size:11px">github</span></div>
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">search_repo</span><span class="muted" style="font-size:11px">github</span></div>
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">query_sql</span><span class="muted" style="font-size:11px">postgres</span></div>
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">post_message</span><span class="muted" style="font-size:11px">slack</span></div>
+            <div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">create_event</span><span class="muted" style="font-size:11px;color:var(--error-color)">calendar</span></div>
+          </div>
+        </div>
+
+        <!-- Config snippet -->
+        <div class="card mt-4">
+          <div class="card-head"><div class="card-title">配置片段（mcp.json）</div><button class="btn btn-ghost btn-xs" onclick="copyConfig()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>复制</button></div>
+          <div class="code-box"><span class="c">// ~/.pi-agent/mcp.json</span>
+{
+  <span class="k">"mcpServers"</span>: {
+    <span class="k">"filesystem"</span>: { <span class="k">"command"</span>: <span class="s">"npx"</span>, <span class="k">"args"</span>: [<span class="s">"-y"</span>, <span class="s">"@modelcontextprotocol/server-filesystem"</span>] },
+    <span class="k">"github"</span>:     { <span class="k">"url"</span>: <span class="s">"https://mcp.github.com/sse"</span>, <span class="k">"token"</span>: <span class="s">"${GITHUB_TOKEN}"</span> },
+    <span class="k">"postgres"</span>:   { <span class="k">"url"</span>: <span class="s">"http://localhost:8080/sse"</span> }
+  }
+}</div>
+          <p class="field-hint">保存后点击「批量发现」自动拉取各 Server 的工具清单并注册到 Agent 工具箱。</p>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add Server modal -->
+  <div id="addServerRoot"></div>
+
+  <script src="share-modal.js"></script>
+  <script>
+    var SERVERS = {
+      filesystem: ['read_file','write_file','list_dir','move_file','search_files','get_metadata'],
+      github: ['create_issue','search_repo','list_prs','merge_pr','create_branch','add_comment'],
+      postgres: ['query_sql','list_tables','describe_table','insert_row','export_csv'],
+      slack: ['post_message','read_channel','create_channel','upload_file','set_status'],
+      calendar: ['create_event','list_events','update_event','delete_event','get_freebusy']
+    };
+    function showTools(s){ var t=SERVERS[s]||[]; var grid=document.getElementById('toolGrid'); grid.innerHTML=t.map(function(x){return '<div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">'+x+'</span><span class="muted" style="font-size:11px">'+s+'</span></div>';}).join(''); document.getElementById('toolCount').textContent=t.length; piToast('已列出 '+s+' 的 '+t.length+' 个工具'); }
+    function discoverAll(){ var all=[]; Object.keys(SERVERS).forEach(function(k){ all=all.concat(SERVERS[k].map(function(t){return {t:t,s:k};})); }); var grid=document.getElementById('toolGrid'); grid.innerHTML=all.map(function(o){return '<div class="flex items-center gap-2 p-2 rounded-lg" style="border:1px solid var(--border-color)"><span class="tool-pill">'+o.t+'</span><span class="muted" style="font-size:11px">'+o.s+'</span></div>';}).join(''); document.getElementById('toolCount').textContent=all.length; piToast('发现完成：共 '+all.length+' 个工具'); }
+    function toggleServer(btn,id){ var row=document.getElementById('srv-'+id); var dot=row.querySelector('.status-dot'); var label=row.querySelector('.secondary'); if(btn.textContent==='停用'){ btn.textContent='启用'; dot.className='status-dot gray'; label.textContent='已停用'; piToast(id+' 已停用'); } else if(btn.textContent==='启用'){ btn.textContent='停用'; dot.className='status-dot green'; label.textContent='已连接'; piToast(id+' 已启用'); } else if(btn.textContent==='删除'){ if(confirm('确认删除 '+id+' Server？')){ row.remove(); piToast(id+' 已删除'); } } }
+    function retryServer(id){ piToast('正在重试连接 '+id+' …'); }
+    function copyConfig(){ piToast('配置已复制到剪贴板'); }
+    function openAddServer(){ var r=document.getElementById('addServerRoot'); r.innerHTML='<div class="backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)closeAddServer()"><div class="card" style="width:480px;max-width:100%;padding:24px" onclick="event.stopPropagation()"><div class="card-head"><div class="card-title">新增 MCP Server</div><button class="icon-btn" style="width:30px;height:30px" onclick="closeAddServer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div><div class="field"><label class="field-label">显示名称</label><input class="input" placeholder="例如 calendar" value=""></div><div class="field"><label class="field-label">传输方式</label><select class="select"><option>stdio（本地进程）</option><option>sse（远程长连接）</option><option>http（Streamable HTTP）</option></select></div><div class="field"><label class="field-label">启动命令 / URL</label><input class="input" placeholder="npx -y @modelcontextprotocol/server-xxx"></div><div class="field"><label class="field-label">环境变量（可选）</label><textarea class="textarea" rows="2" placeholder="TOKEN=xxx"></textarea></div><div class="flex justify-end gap-2 mt-2"><button class="btn btn-secondary" onclick="closeAddServer()">取消</button><button class="btn btn-primary" onclick="closeAddServer();piToast(\'Server 已添加，开始发现工具\')">保存并连接</button></div></div></div>'; }
+    function closeAddServer(){ document.getElementById('addServerRoot').innerHTML=''; }
+  </script>
+</body>
+</html>

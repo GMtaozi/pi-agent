@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workforge-server-dev
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - ESBUILD_NO_SERVICE_WORKER=1
+    volumes:
+      - ./apps/server/src:/app/apps/server/src:delegated
+      - ./packages:/app/packages:delegated
+      - ./data:/app/data
+      - ./logs:/app/logs
+    command: npx tsx src/index.ts
+    networks:
+      - workforge-network
+
+  web:
+    image: node:22-alpine
+    container_name: workforge-web-dev
+    ports:
+      - "5173:5173"
+    working_dir: /app/apps/web
+    volumes:
+      - ./apps/web:/app/apps/web:delegated
+      - ./apps/web/node_modules:/app/apps/web/node_modules
+    command: sh -c "corepack enable && pnpm dev"
+    networks:
+      - workforge-network
+
+networks:
+  workforge-network:
+    driver: bridge
