@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile --ignore-scripts
 
+      - name: Build all packages (required for workspace type resolution)
+        run: pnpm build
+
       - name: Run type check
         run: pnpm check
 
@@ -57,6 +60,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile --ignore-scripts
+
+      - name: Build all packages (required for workspace type resolution)
+        run: pnpm build
 
       - name: Run unit tests
         run: pnpm test
