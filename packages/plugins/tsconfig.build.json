@@ -21,6 +21,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
   "references": [
-    { "path": "../sandbox/tsconfig.build.json" }
+    { "path": "../sandbox/tsconfig.build.json" },
+    { "path": "../persistence/tsconfig.build.json" }
   ]
 }

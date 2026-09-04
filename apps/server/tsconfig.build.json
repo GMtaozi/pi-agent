@@ -19,5 +19,31 @@
     "noImplicitAny": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"]
+  "exclude": ["node_modules", "dist", "**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"],
+  "references": [
+    { "path": "../../packages/agent-engine/tsconfig.build.json" },
+    { "path": "../../packages/agent-orchestrator/tsconfig.build.json" },
+    { "path": "../../packages/auth/tsconfig.build.json" },
+    { "path": "../../packages/governance/tsconfig.build.json" },
+    { "path": "../../packages/gateway/tsconfig.build.json" },
+    { "path": "../../packages/knowledge/tsconfig.build.json" },
+    { "path": "../../packages/observability/tsconfig.build.json" },
+    { "path": "../../packages/logging/tsconfig.build.json" },
+    { "path": "../../packages/memory/tsconfig.build.json" },
+    { "path": "../../packages/monitoring/tsconfig.build.json" },
+    { "path": "../../packages/persistence/tsconfig.build.json" },
+    { "path": "../../packages/provider-runtime/tsconfig.build.json" },
+    { "path": "../../packages/redis/tsconfig.build.json" },
+    { "path": "../../packages/sandbox/tsconfig.build.json" },
+    { "path": "../../packages/schedule/tsconfig.build.json" },
+    { "path": "../../packages/settings/tsconfig.build.json" },
+    { "path": "../../packages/skills/tsconfig.build.json" },
+    { "path": "../../packages/templates/tsconfig.build.json" },
+    { "path": "../../packages/solutions/tsconfig.build.json" },
+    { "path": "../../packages/storage/tsconfig.build.json" },
+    { "path": "../../packages/tools/tsconfig.build.json" },
+    { "path": "../../packages/workflow/tsconfig.build.json" },
+    { "path": "../../packages/workspace/tsconfig.build.json" },
+    { "path": "../../packages/plugins/tsconfig.build.json" }
+  ]
 }

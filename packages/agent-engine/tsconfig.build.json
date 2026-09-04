@@ -19,5 +19,15 @@
     "noImplicitAny": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"]
+  "exclude": ["node_modules", "dist", "**/*.d.ts", "**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"],
+  "references": [
+    { "path": "../governance/tsconfig.build.json" },
+    { "path": "../logging/tsconfig.build.json" },
+    { "path": "../provider-runtime/tsconfig.build.json" },
+    { "path": "../sandbox/tsconfig.build.json" },
+    { "path": "../settings/tsconfig.build.json" },
+    { "path": "../skills/tsconfig.build.json" },
+    { "path": "../tools/tsconfig.build.json" },
+    { "path": "../workspace/tsconfig.build.json" }
+  ]
 }
