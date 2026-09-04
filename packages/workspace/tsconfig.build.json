@@ -10,7 +10,6 @@
       "DOM.Iterable"
     ],
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
