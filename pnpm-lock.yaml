@@ -101,6 +101,9 @@ importers:
       '@workforge/debug':
         specifier: workspace:*
         version: link:../../packages/debug
+      '@workforge/gateway':
+        specifier: workspace:*
+        version: link:../../packages/gateway
       '@workforge/governance':
         specifier: workspace:*
         version: link:../../packages/governance
@@ -116,6 +119,9 @@ importers:
       '@workforge/monitoring':
         specifier: workspace:*
         version: link:../../packages/monitoring
+      '@workforge/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@workforge/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
@@ -140,6 +146,9 @@ importers:
       '@workforge/skills':
         specifier: workspace:*
         version: link:../../packages/skills
+      '@workforge/solutions':
+        specifier: workspace:*
+        version: link:../../packages/solutions
       '@workforge/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -339,11 +348,24 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
-  packages/governance:
+  packages/gateway:
     devDependencies:
       typescript:
         specifier: ^5.6.2
         version: 5.9.3
+
+  packages/governance:
+    dependencies:
+      '@workforge/logging':
+        specifier: workspace:*
+        version: link:../logging
+    devDependencies:
+      typescript:
+        specifier: ^5.6.2
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@24.1.3(canvas@3.2.3))(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/knowledge:
     dependencies:
@@ -361,7 +383,15 @@ importers:
         specifier: ^1.1.4
         version: 1.1.5
 
-  packages/logging: {}
+  packages/logging:
+    dependencies:
+      pino:
+        specifier: ^10.0.0
+        version: 10.3.1
+    devDependencies:
+      '@types/pino':
+        specifier: ^7.0.0
+        version: 7.0.5
 
   packages/memory:
     devDependencies:
@@ -374,6 +404,12 @@ importers:
       '@workforge/logging':
         specifier: workspace:*
         version: link:../logging
+
+  packages/observability:
+    devDependencies:
+      typescript:
+        specifier: ^5.6.2
+        version: 5.9.3
 
   packages/persistence:
     dependencies:
@@ -400,6 +436,9 @@ importers:
       typescript:
         specifier: ^5.6.2
         version: 5.9.3
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@24.1.3(canvas@3.2.3))(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/provider-runtime:
     dependencies:
@@ -421,6 +460,9 @@ importers:
 
   packages/schedule:
     dependencies:
+      '@workforge/logging':
+        specifier: workspace:*
+        version: link:../logging
       cron-parser:
         specifier: ^4.9.0
         version: 4.9.0
@@ -456,13 +498,19 @@ importers:
         specifier: workspace:*
         version: link:../tools
 
+  packages/solutions: {}
+
   packages/storage:
     dependencies:
       minio:
         specifier: ^8.0.1
         version: 8.0.7
 
-  packages/templates: {}
+  packages/templates:
+    devDependencies:
+      vitest:
+        specifier: ^4.1.9
+        version: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@24.1.3(canvas@3.2.3))(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0))
 
   packages/tools:
     dependencies:
@@ -472,6 +520,9 @@ importers:
       '@earendil-works/pi-ai':
         specifier: workspace:*
         version: link:../../vendor/pi/packages/ai
+      '@workforge/logging':
+        specifier: workspace:*
+        version: link:../logging
       '@workforge/workspace':
         specifier: workspace:*
         version: link:../workspace
@@ -487,6 +538,9 @@ importers:
 
   packages/workspace:
     dependencies:
+      '@workforge/logging':
+        specifier: workspace:*
+        version: link:../logging
       chokidar:
         specifier: ^3.6.0
         version: 3.6.0
@@ -1702,6 +1756,10 @@ packages:
 
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
+
+  '@types/pino@7.0.5':
+    resolution: {integrity: sha512-wKoab31pknvILkxAF8ss+v9iNyhw5Iu/0jLtRkUD74cNfOOLJNnqfFKAv0r7wVaTQxRZtWrMpGfShwwBjOcgcg==}
+    deprecated: This is a stub types definition. pino provides its own type definitions, so you do not need this installed.
 
   '@types/prismjs@1.26.6':
     resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
@@ -5514,6 +5572,10 @@ snapshots:
       pg-protocol: 1.16.0
       pg-types: 2.2.0
 
+  '@types/pino@7.0.5':
+    dependencies:
+      pino: 10.3.1
+
   '@types/prismjs@1.26.6': {}
 
   '@types/prop-types@15.7.15': {}
@@ -5659,7 +5721,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.1
-      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@24.1.3)(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0))
+      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.20.1)(@vitest/coverage-v8@4.1.9)(jsdom@24.1.3)(vite@6.4.3(@types/node@22.20.1)(tsx@4.23.12)(yaml@2.9.0))
 
   '@vitest/expect@4.1.9':
     dependencies:
@@ -8567,36 +8629,6 @@ snapshots:
       - msw
 
   vitest@4.1.9(@opentelemetry/api@1.9.0)(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@24.1.3(canvas@3.2.3))(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0)):
-    dependencies:
-      '@vitest/expect': 4.1.9
-      '@vitest/mocker': 4.1.9(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0))
-      '@vitest/pretty-format': 4.1.9
-      '@vitest/runner': 4.1.9
-      '@vitest/snapshot': 4.1.9
-      '@vitest/spy': 4.1.9
-      '@vitest/utils': 4.1.9
-      es-module-lexer: 2.3.2
-      expect-type: 1.4.0
-      magic-string: 0.30.21
-      obug: 2.1.4
-      pathe: 2.0.3
-      picomatch: 4.0.5
-      std-env: 4.2.0
-      tinybench: 2.9.0
-      tinyexec: 1.3.0
-      tinyglobby: 0.2.17
-      tinyrainbow: 3.1.1
-      vite: 6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.0
-      '@types/node': 24.12.4
-      '@vitest/coverage-v8': 4.1.9(vitest@4.1.9)
-      jsdom: 24.1.3(canvas@3.2.3)
-    transitivePeerDependencies:
-      - msw
-
-  vitest@4.1.9(@opentelemetry/api@1.9.0)(@types/node@24.12.4)(@vitest/coverage-v8@4.1.9)(jsdom@24.1.3)(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.9
       '@vitest/mocker': 4.1.9(vite@6.4.3(@types/node@24.12.4)(tsx@4.23.12)(yaml@2.9.0))

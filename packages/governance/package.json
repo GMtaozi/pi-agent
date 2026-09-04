@@ -9,6 +9,9 @@
     "check": "tsc -p tsconfig.build.json --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@workforge/logging": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^5.6.2",
     "vitest": "^4.1.9"

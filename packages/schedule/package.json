@@ -9,6 +9,7 @@
     "check": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
+    "@workforge/logging": "workspace:*",
     "node-cron": "^4.0.0",
     "cron-parser": "^4.9.0"
   },

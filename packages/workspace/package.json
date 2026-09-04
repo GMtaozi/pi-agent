@@ -9,6 +9,7 @@
     "check": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
+    "@workforge/logging": "workspace:*",
     "chokidar": "^3.6.0"
   },
   "devDependencies": {
