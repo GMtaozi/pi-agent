@@ -1,3 +1,4 @@
+import { Logger } from '@workforge/logging';
 import SQLite from 'better-sqlite3';
 import 'crypto';
 import 'fs';
@@ -47,12 +48,7 @@ export class SqliteDatabase {
     this.sqlite.pragma('journal_mode = WAL');
     this.sqlite.pragma('foreign_keys = ON');
     
-    this.logger = {
-      info: (msg: string, data?: any) => console.log('[DB]', msg, data || ''),
-      warn: (msg: string, data?: any) => console.warn('[DB]', msg, data || ''),
-      error: (msg: string, data?: any) => console.error('[DB]', msg, data || ''),
-      debug: (msg: string, data?: any) => console.debug('[DB]', msg, data || '')
-    };
+    this.logger = new Logger({ service: 'persistence', level: 'info' });
   }
 
   async initialize(): Promise<void> {
